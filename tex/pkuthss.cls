@@ -270,9 +270,9 @@
 \newcommand{\thssnl}{\\}
 
 % Set up page layout.
-\geometry{a4paper, hmargin = 2.6cm, headheight = 0.5cm, headsep = 0.6cm}
+\geometry{a4paper, hmargin = 2.6cm, headheight = 0.5cm, headsep = 0.5cm}
 \ifthss@opt@ugly
-	\geometry{top = 3.1cm, bottom = 3.0cm, footskip = 0.8cm}
+	\geometry{top = 3.0cm, bottom = 3.0cm, footskip = 0.75cm}
 \else
 	\geometry{top = 3.0cm, bottom = 3.1cm, footskip = 1.1cm}
 \fi
