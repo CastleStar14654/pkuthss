@@ -423,10 +423,11 @@
 	% Make the title page centered.
 	\begin{titlepage}\centering
 		% Emblem and inscription of the university, and type of thesis.
+		\vfill
 		{%
 			\ifthss@opt@ugly%
-				\zihao{-0}\includegraphics[height = 1.9em]{pkulogo}\hspace{0.3em}%
-				\raisebox{0.32em}{\includegraphics[height = 1.3em]{pkuword}}\\[0.5em]
+				\zihao{-0}\includegraphics[height = 1.86em]{pkulogo}\hspace{0.35em}%
+				\raisebox{0.32em}{\includegraphics[height = 1.3em]{pkuword}}\\[0.4em]
 			\else%
 				\zihao{1}\includegraphics[height = 2.4em]{pkulogo}\hspace{0.4em}%
 				\raisebox{0.4em}{\includegraphics[height = 1.6em]{pkuword}}\\[0.8em]
@@ -436,28 +437,28 @@
 		\vfill
 		% Title of the thesis.
 		{%
-			\ifthss@opt@ugly\zihao{-1}\else\zihao{2}\fi%
-			\linespread{1.6}\selectfont{\label@ctitle}%
-			\thss@int@fillinblank{2}{0.64\textwidth}{\textbf{\@ctitle}}%
+			\zihao{2}\linespread{1.6}\selectfont{\label@ctitle}%
+			\thss@int@fillinblank{2}{0.64\textwidth}{\ifthss@opt@ugly\zihao{1}\fi\textbf{\@ctitle}}%
 		}
-		\vfill
+		\ifthss@opt@ugly\\[\stretch{2}]\else\vfill\fi
 		% Information about the author.
 		{%
 			% Slightly adjust the line skip when using new font size.
+			\def\font@label{\bfseries\zihao{-3}}
 			\zihao{3}\linespread{1.75}\selectfont
 			\def\thss@tmp@len{0.56\textwidth}
 			\begin{tabular}{l@{\extracolsep{0.2em}}c}
-				{\bfseries\label@cauthor}		&
+				{\font@label\label@cauthor}		&
 				\thss@int@fillinblank{1}{\thss@tmp@len}{\fangsong\@cauthor}		\\
-				{\bfseries\label@studentid}	&
+				{\font@label\label@studentid}	&
 				\thss@int@fillinblank{1}{\thss@tmp@len}{\fangsong\@studentid}	\\
-				{\bfseries\label@school}		&
+				{\font@label\label@school}		&
 				\thss@int@fillinblank{1}{\thss@tmp@len}{\fangsong\@school}		\\
-				{\bfseries\label@cmajor}		&
+				{\font@label\label@cmajor}		&
 				\thss@int@fillinblank{1}{\thss@tmp@len}{\fangsong\@cmajor}		\\
-				{\bfseries\label@direction}	&
+				{\font@label\label@direction}	&
 				\thss@int@fillinblank{1}{\thss@tmp@len}{\fangsong\@direction}	\\
-				{\bfseries\label@cmentor}		&
+				{\font@label\label@cmentor}		&
 				\thss@int@fillinblank{\mentorlines}%
 					{\thss@tmp@len}{\fangsong\@cmentor}	\\
 			\end{tabular}%
@@ -465,7 +466,7 @@
 		\vfill
 		% Date.
 		{\ifthss@opt@ugly\zihao{3}\else\zihao{-2}\fi\@date}
-	\par\end{titlepage}%
+	\par\vfill\end{titlepage}%
 }
 
 % Typeset the title page for double-blind review.
