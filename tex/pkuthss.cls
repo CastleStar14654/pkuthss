@@ -155,6 +155,11 @@
 	% Provides utilities for setting TOC format; `titles' applied to avoid
 	% interfering with LaTeX's own title mechanism.
 	\RequirePackage[titles]{tocloft}
+	\ifthss@opt@ugly
+		\renewcommand{\cftdotsep}{2.}% make leading dots condense
+		\renewcommand{\cftchapleader}{\normalfont\cftdotfill{\cftchapdotsep}}
+		\renewcommand{\cftchapdotsep}{\cftdotsep}% add leading dots to chapter
+	\fi
 	\setlength{\cftbeforechapskip}{6bp plus 1bp}
 	\setlength{\cftsecindent}{\ccwd}
 	\setlength{\cftsubsecindent}{2\ccwd}
