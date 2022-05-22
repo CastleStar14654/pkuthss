@@ -157,8 +157,13 @@
 \fi
 
 \ifthss@opt@pkuspace
-	% lineskip / baselineskip = 20 bp / (12 bp * (6 / 5)).
-	\linespread{1.39}\selectfont
+	% it is better to redefine the baseline skip of normalsize,
+	% so as not to make other size have abnormal 1.39 line spacing
+	% baselineskip = lineskip = 20bp
+	\linespread{1.0}% undo ctex setting for linespread 1.3
+	\let\old@normalsize\normalsize
+	\def\normalsize{\old@normalsize\fontsize{12bp}{20bp}\selectfont}
+	\normalsize
 	% Provides utilities for setting TOC format; `titles' applied to avoid
 	% interfering with LaTeX's own title mechanism.
 	\RequirePackage[titles]{tocloft}
@@ -294,29 +299,31 @@
 \setcounter{secnumdepth}{3}
 \setcounter{tocdepth}{2}
 \ctexset{
-	chapter = {beforeskip = {0bp}, afterskip = {18bp plus 0.2ex}},
+	% 24bp+0.1*16bp - extra 20bp line; 18bp+0.1*16bp
+	chapter = {beforeskip = {5.6bp plus 1ex minus 0.2ex}, afterskip = {19.6bp plus 0.2ex}},
 	section =
-		{beforeskip = {20bp plus 1ex minus 0.2ex}, afterskip = {5bp plus 0.2ex}},
+		{beforeskip = {24bp plus 1ex minus 0.2ex}, afterskip = {6bp plus 0.2ex}},
 	subsection =
-		{beforeskip = {12bp plus 1ex minus 0.2ex}, afterskip = {5bp plus 0.2ex}},
+		{beforeskip = {12bp plus 1ex minus 0.2ex}, afterskip = {6bp plus 0.2ex}},
 	subsubsection =
-		{beforeskip = {12bp plus 1ex minus 0.2ex}, afterskip = {5bp plus 0.2ex}}
+		{beforeskip = {12bp plus 1ex minus 0.2ex}, afterskip = {6bp plus 0.2ex}}
 }
 \ctexset{
 	chapter = {nameformat = {}, titleformat = {}},
-	subsubsection = {format = {\zihao{-4}\bfseries}}
 }
 \ifthss@opt@ugly
 	\ctexset{
 		chapter = {format = {\zihao{3}\bfseries\centering}},
-		section = {format = {\zihao{4}\bfseries}},
-		subsection = {format = {\fontsize{13bp}{15.6bp}\selectfont\bfseries}}
+		section = {format = {\fontsize{14bp}{20bp}\selectfont\bfseries}},% 20bp line spacing
+		subsection = {format = {\fontsize{13bp}{20bp}\selectfont\bfseries}},
+		subsubsection = {format = {\normalsize\bfseries}}% \normalsize and \zihao{-4} has different line spacing
 	}
 \else
 	\ctexset{
 		chapter = {format = {\zihao{-2}\bfseries\centering}},
 		section = {format = {\zihao{-3}\bfseries}},
-		subsection = {format = {\zihao{4}\bfseries}}
+		subsection = {format = {\zihao{4}\bfseries}},
+		subsubsection = {format = {\zihao{-4}\bfseries}}
 	}
 \fi
 
