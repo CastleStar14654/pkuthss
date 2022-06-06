@@ -272,7 +272,9 @@
 % Set up page layout.
 \geometry{a4paper, hmargin = 2.6cm, headheight = 0.5cm, headsep = 0.5cm}
 \ifthss@opt@ugly
-	\geometry{top = 3.0cm, bottom = 3.0cm, footskip = 0.75cm}
+	% the regulation ask for 2.5cm, but LaTeX see this as the baseline position
+	% so 0.1cm is added
+	\geometry{top = 3.0cm, bottom = 2.6cm, footskip = 0.75cm}
 \else
 	\geometry{top = 3.0cm, bottom = 3.1cm, footskip = 1.1cm}
 \fi
