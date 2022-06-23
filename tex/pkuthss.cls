@@ -164,6 +164,7 @@
 	\let\old@normalsize\normalsize
 	\def\normalsize{\old@normalsize\fontsize{12bp}{20bp}\selectfont}
 	\normalsize
+	\setlength{\topskip}{16bp}% add topline space
 	% Provides utilities for setting TOC format; `titles' applied to avoid
 	% interfering with LaTeX's own title mechanism.
 	\RequirePackage[titles]{tocloft}
@@ -299,8 +300,7 @@
 \setcounter{secnumdepth}{3}
 \setcounter{tocdepth}{2}
 \ctexset{
-	% 24bp+0.1*16bp - extra 20bp line; 18bp+0.1*16bp
-	chapter = {beforeskip = {5.6bp plus 1ex minus 0.2ex}, afterskip = {19.6bp plus 0.2ex}},
+	chapter = {afterskip = {18bp plus 0.2ex}},
 	section =
 		{beforeskip = {24bp plus 1ex minus 0.2ex}, afterskip = {6bp plus 0.2ex}},
 	subsection =
@@ -313,14 +313,48 @@
 }
 \ifthss@opt@ugly
 	\ctexset{
-		chapter = {format = {\zihao{3}\bfseries\centering}},
-		section = {format = {\fontsize{14bp}{20bp}\selectfont\bfseries}},% 20bp line spacing
+		% 24bp - \topskip (=16bp) - 0.2*\zihao{3}(16bp) line
+		chapter = {beforeskip = {4.8bp plus 1ex minus 0.2ex},
+			format = {\zihao{3}\bfseries\centering}},
+		section =
+			{format = {\fontsize{14bp}{20bp}\selectfont\bfseries}},% 20bp line spacing
 		subsection = {format = {\fontsize{13bp}{20bp}\selectfont\bfseries}},
-		subsubsection = {format = {\normalsize\bfseries}}% \normalsize and \zihao{-4} has different line spacing
+		% \normalsize and \zihao{-4} has different line spacing
+		subsubsection = {format = {\normalsize\bfseries}}
 	}
+	% LaTeX in default prohibits a section title after another section title to add
+	% new vspace before it. While M$ Word compares two spacing and use the larger
+	% one. Here we mimic Word, which is ugly
+	\RequirePackage{etoolbox}
+	\patchcmd{\@makechapterhead}{%
+		\vskip \CTEX@headingskip}{%
+		\addvspace{\CTEX@headingskip}%
+	}{}{\ClassInfo{pkuthss}{%
+		Patching of \protect\@makechapterhead\space failed}}
+	\patchcmd{\@makeschapterhead}{%
+		\vskip \CTEX@headingskip}{%
+		\addvspace{\CTEX@headingskip}%
+	}{}{\ClassInfo{pkuthss}{%
+	  Patching of \protect\@makeschapterhead\space failed}}
+	\patchcmd{\@startsection}{%
+		\csname CTEX@#1@break\endcsname}{%
+		\csname CTEX@#1@break\endcsname\fi%
+	}{}{\ClassInfo{pkuthss}{%
+		Patching of \protect\@startsection\space failed}}
+	\patchcmd{\@startsection}{%
+		\fi \@ifstar}{%
+		\@ifstar%
+	}{}{\ClassInfo{pkuthss}{%
+		Patching of \protect\@startsection\space failed}}
+	\patchcmd{\@xsect}{%
+		\vskip \CTEX@headingskip}{%
+		\addvspace{\CTEX@headingskip}%
+	}{}{\ClassInfo{pkuthss}{%
+		Patching of \protect\@xsect\space failed}}
 \else
 	\ctexset{
-		chapter = {format = {\zihao{-2}\bfseries\centering}},
+		% 24bp - \topskip (=16bp) - 0.2*\zihao{-2}(18bp) line
+		chapter = {beforeskip = {4.4bp plus 1ex minus 0.2ex}, format = {\zihao{-2}\bfseries\centering}},
 		section = {format = {\zihao{-3}\bfseries}},
 		subsection = {format = {\zihao{4}\bfseries}},
 		subsubsection = {format = {\zihao{-4}\bfseries}}
