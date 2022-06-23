@@ -60,6 +60,9 @@
 \thss@int@boolopt{pdfprop}{true}
 % Whether to disable some infractions intended to make the style less ugly.
 \thss@int@boolopt{ugly}{false}
+% Whether to enable some infractions to make the style more M$ Word-like.
+% It is not obliged by PKU; `ugly' should be on first
+\thss@int@boolopt{wordlike}{false}
 % Pass all other options to `ctexbook' document class.
 \DeclareOption*{\PassOptionsToClass{\CurrentOption}{ctexbook}}
 % Process all class options now.
@@ -149,11 +152,13 @@
 		\parindent 2em%
 		\noindent
 		\hb@xt@0pt{\hss\@thefnmark\hspace{.5\ccwd}}#1}
-	% make footnote rule `Word'-like
-	\renewcommand\footnoterule{%
-		\kern-6\p@
-		\hrule\@width.32\columnwidth
-		\kern5.6\p@}
+	\ifthss@opt@wordlike
+		% make footnote rule `Word'-like
+		\renewcommand\footnoterule{%
+			\kern-6\p@
+			\hrule\@width.32\columnwidth
+			\kern5.6\p@}
+	\fi
 \fi
 
 \ifthss@opt@pkuspace
@@ -168,7 +173,7 @@
 	% Provides utilities for setting TOC format; `titles' applied to avoid
 	% interfering with LaTeX's own title mechanism.
 	\RequirePackage[titles]{tocloft}
-	\ifthss@opt@ugly
+	\ifthss@opt@wordlike
 		\renewcommand{\cftdotsep}{2.}% make leading dots condense
 		\renewcommand{\cftchapleader}{\normalfont\cftdotfill{\cftchapdotsep}}
 		\renewcommand{\cftchapdotsep}{\cftdotsep}% add leading dots to chapter
@@ -327,35 +332,6 @@
 		% \normalsize and \zihao{-4} has different line spacing
 		subsubsection = {format = {\normalsize\bfseries}}
 	}
-	% LaTeX in default prohibits a section title after another section title to add
-	% new vspace before it. While M$ Word compares two spacing and use the larger
-	% one. Here we mimic Word, which is ugly
-	\RequirePackage{etoolbox}
-	\patchcmd{\@makechapterhead}{%
-		\vskip \CTEX@headingskip}{%
-		\addvspace{\CTEX@headingskip}%
-	}{}{\ClassInfo{pkuthss}{%
-		Patching of \protect\@makechapterhead\space failed}}
-	\patchcmd{\@makeschapterhead}{%
-		\vskip \CTEX@headingskip}{%
-		\addvspace{\CTEX@headingskip}%
-	}{}{\ClassInfo{pkuthss}{%
-	  Patching of \protect\@makeschapterhead\space failed}}
-	\patchcmd{\@startsection}{%
-		\csname CTEX@#1@break\endcsname}{%
-		\csname CTEX@#1@break\endcsname\fi%
-	}{}{\ClassInfo{pkuthss}{%
-		Patching of \protect\@startsection\space failed}}
-	\patchcmd{\@startsection}{%
-		\fi \@ifstar}{%
-		\@ifstar%
-	}{}{\ClassInfo{pkuthss}{%
-		Patching of \protect\@startsection\space failed}}
-	\patchcmd{\@xsect}{%
-		\vskip \CTEX@headingskip}{%
-		\addvspace{\CTEX@headingskip}%
-	}{}{\ClassInfo{pkuthss}{%
-		Patching of \protect\@xsect\space failed}}
 \else
 	\ctexset{
 		% 24bp - \topskip (=16bp) - 0.2*\zihao{-2}(18bp) line
@@ -365,6 +341,42 @@
 		subsubsection = {format = {\zihao{-4}\bfseries}}
 	}
 \fi
+
+\ifthss@opt@wordlike
+	\RequirePackage{etoolbox}
+	\let\wordlike@patchcmd\patchcmd
+\fi
+\providecommand{\wordlike@patchcmd}[5]{\relax}
+
+% LaTeX in default prohibits a section title after another section title to add
+% new vspace before it. While M$ Word compares two spacing and use the larger
+% one. Here we mimic Word, which is ugly
+\wordlike@patchcmd{\@makechapterhead}{%
+	\vskip \CTEX@headingskip}{%
+	\addvspace{\CTEX@headingskip}%
+}{}{\ClassInfo{pkuthss}{%
+	Patching of \protect\@makechapterhead\space failed}}
+\wordlike@patchcmd{\@makeschapterhead}{%
+	\vskip \CTEX@headingskip}{%
+	\addvspace{\CTEX@headingskip}%
+}{}{\ClassInfo{pkuthss}{%
+	Patching of \protect\@makeschapterhead\space failed}}
+\wordlike@patchcmd{\@startsection}{%
+	\csname CTEX@#1@break\endcsname}{%
+	\csname CTEX@#1@break\endcsname\fi%
+}{}{\ClassInfo{pkuthss}{%
+	Patching of \protect\@startsection\space failed}}
+\wordlike@patchcmd{\@startsection}{%
+	\fi \@ifstar}{%
+	\@ifstar%
+}{}{\ClassInfo{pkuthss}{%
+	Patching of \protect\@startsection\space failed}}
+\wordlike@patchcmd{\@xsect}{%
+	\vskip \CTEX@headingskip}{%
+	\addvspace{\CTEX@headingskip}%
+}{}{\ClassInfo{pkuthss}{%
+	Patching of \protect\@xsect\space failed}}
+\let\wordlike@patchcmd\@undefined
 
 % `\MakeUppercase' works problematically.
 % eg. it converts `\cite{ctex}' into `\cite{CTEX}'.
