@@ -77,6 +77,29 @@
 \prop_gput:Nnn \g_msg_module_type_prop { pkuthss } { Class }
 %    \end{macrocode}
 %
+% \subsection{\LaTeX{} 内核版本检查 \LaTeX{} version check}
+%    本文档类使用了一些 2025/06/01 版本内核的功能，因此需要判断内核版本是否够新。
+%
+% \begin{macro}[int]{\IfFormatAtLeastTF}
+%    内核版本判定。本宏在 2020/10/01 版本加入，因此若缺少，则提供定义。
+%    \begin{macrocode}
+\providecommand \IfFormatAtLeastTF { \@ifl@t@r \fmtversion }
+%    \end{macrocode}
+% \end{macro}
+%
+%    \begin{macrocode}
+\IfFormatAtLeastTF { 2024-06-01 }
+  {}
+  {
+    \ClassError { pkuthss3 } { LaTeX~kernel~too~old }
+      {
+        You~need~a~newer~LaTeX~to~use~this~release~of~pkuthss3.\\
+        使用本版本~pkuthss3~需要更新版本的~LaTeX。
+      }
+    \endinput
+  }
+%    \end{macrocode}
+%
 %    \begin{macrocode}
 %</cls>
 %    \end{macrocode}
