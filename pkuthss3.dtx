@@ -124,6 +124,11 @@
 %    \begin{macrocode}
 \msg_new:nnn { pkuthss } { option-invalid }
   { Option~`\l_keys_key_tl'~is~invalid. }
+\msg_new:nnn { pkuthss } { option-preset }
+  {
+    Option~`\l_keys_key_tl'~has~been~set~by~pkuthss.\\
+    User-provided~value~is~ignored.
+  }
 %    \end{macrocode}
 %
 % \subsection{选项定义 Defining options}
@@ -144,7 +149,42 @@
       },
 %    \end{macrocode}
 %
+% \subsubsection{^^A
+%   从标准文档类或 C\TeX{} 中去除的选项 Options removed from standard or C\TeX\
+%   classes}
+%    以下两个 C\TeX{} 选项 \pkg{pkuthss} 已经给定值，用户另行指定值无效，因此给出警告。
 %    \begin{macrocode}
+    zihao      .code:n = \msg_warning:nn { pkuthss } { option-preset },
+    linespread .code:n = \msg_warning:nn { pkuthss } { option-preset },
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+  }
+%    \end{macrocode}
+%
+%    以下标准文档类选项由于格式要求，对 \pkg{pkuthss} 无意义，设置为无效。
+%    \begin{macrocode}
+\clist_map_inline:nn
+  {
+    a5paper , b5paper , letterpaper , legalpaper , executivepaper ,
+    landscape ,
+    10pt , 11pt , 12pt ,
+    twoside , oneside ,
+    titlepage , notitlepage ,
+    onecolumn , twocolumn ,
+    leqno ,
+    openbib ,
+%    \end{macrocode}
+%    以及 C\TeX{} 的 \cmd[no-index]{scheme} 选项。
+%    \begin{macrocode}
+    scheme
+  }
+  {
+    \@@_define_option:n
+      {
+        #1 .code:n  = \OptionNotUsed,
+        #1 .usage:n = load,
+      }
   }
 %    \end{macrocode}
 %
