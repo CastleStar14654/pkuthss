@@ -191,6 +191,16 @@
 %    \end{macrocode}
 % \end{macro}
 %
+% \begin{macro}{space-below-footer, \l_@@_space_below_footer_bool}
+%    是否模拟 MS Word 默认在页脚文字段后添加 8bp 间距的行为。
+%    \begin{macrocode}
+    space-below-footer .bool_set:N = \l_@@_space_below_footer_bool,
+    space-below-footer .initial:n  = false,
+    space-below-footer .default:n  = true,
+    space-below-footer .usage:n    = load,
+%    \end{macrocode}
+% \end{macro}
+%
 % \subsubsection{文档类一般选项 Class general options}
 % \begin{macro}{thesis-type, \l_@@_thesis_type_str}
 %    论文类型。
@@ -621,6 +631,127 @@
           { 10.5bp } { } { 1 }
       }
   }
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{段落 Paragraphing}
+%    C\TeX{} 已经进行首行缩进 2 汉字字符的设置。其他设置保留为 \LaTeX{} 标准定义。
+%
+% \subsubsection{页面设置 Page layout}
+% \paragraph{垂直间距 Vertical spacing}
+% \begin{macro}[int]{\headheight}
+%    页眉从基线算起的高度；总是假设为中易宋体五号字（10.5bp）的基线位置。
+%    \begin{macrocode}
+\dim_set:Nn \headheight { 10.5bp }
+\dim_set:Nn \headheight { \c_@@_ascender_ratio_simsun_tl \headheight }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[int]{\headsep}
+%    页眉基线到上页边距（3cm）的长度，而页眉顶端要求为 2cm。
+%    \begin{macrocode}
+\dim_set:Nn \headsep { 3cm - 2cm - \headheight }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[int]{\topskip}
+%    正文为第一行基线以上高度留出的空隙。由于为固定 20bp 行距，设置为 0.8 倍，即 16bp。
+%    \begin{macrocode}
+\dim_set:Nn \topskip { 16bp }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[int]{\maxdepth, \footskip}
+%    页脚基线到正文最下方基线的距离。
+%
+%    由于 MS Word 的下页边距定义是完整容纳正文，而 \LaTeX{} 定义是正文最下方基线，因此需要
+%    进行一些换算。
+%
+%    这里选择将正文最下方基线定义为底端对齐的（中易宋体）脚注字号（9bp，\cs{footnotesize}）
+%    的基线。\cs{maxdepth} 定义为脚注字号的 \cs{strutbox} 的深度，\cs{maxdepth} 处为格
+%    式要求的下页边距 2.5cm。
+%    \begin{macrocode}
+\dim_set:Nn \l_tmpa_dim { 9bp }
+\dim_set:Nn \maxdepth { \c_@@_baseline_ratio_simsun_tl \l_tmpa_dim }
+\dim_sub:Nn \maxdepth { \c_@@_ascender_ratio_simsun_tl \l_tmpa_dim }
+%    \end{macrocode}
+%
+%    格式要求页脚距边界 1.75cm。MS Word 中，这一距离仍是从文字的底部而非基线计算。这里的计
+%    算基准为页脚字体 Times New Roman（五号字，10.5bp）。
+%    \begin{macrocode}
+\dim_set:Nn \footskip { 2.5cm - 1.75cm }
+\dim_set:Nn \l_tmpa_dim { 10.5bp }
+\dim_sub:Nn \footskip { \c_@@_baseline_ratio_times_tl \l_tmpa_dim }
+\dim_add:Nn \footskip { \c_@@_ascender_ratio_times_tl \l_tmpa_dim + \maxdepth }
+%    \end{macrocode}
+%
+%    如有需要，复刻 Word 添加的底部间距。
+%    \begin{macrocode}
+\bool_if:NT \l_@@_space_below_footer_bool
+  { \dim_sub:Nn \footskip { 8bp } }
+%    \end{macrocode}
+% \end{macro}
+%
+% \paragraph{正文尺寸 The dimension of text}
+% \begin{macro}[int]{\textwidth}
+%    左右页边距 2.6cm。
+%    \begin{macrocode}
+\dim_set:Nn \l_tmpa_dim { 2.6cm }
+\dim_set:Nn \textwidth  { \paperwidth - 2 \l_tmpa_dim }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[int]{\textheight}
+%    上下页边距 3.0cm 与 2.5cm。还需减去 \cs{maxdepth}。
+%    \begin{macrocode}
+\dim_set:Nn \l_tmpa_dim { 3.0cm + 2.5cm }
+\dim_set:Nn \textheight  { \paperheight - \l_tmpa_dim - \maxdepth }
+%    \end{macrocode}
+% \end{macro}
+%
+% \paragraph{边距 Margins}
+% \begin{macro}[int]{\oddsidemargin, \evensidemargin}
+%   左右页边距 2.6cm。\LaTeX{} 的边距计算起点为 1in。
+%    \begin{macrocode}
+\dim_set:Nn    \oddsidemargin { 2.6cm - 1in }
+\dim_set_eq:NN \evensidemargin \oddsidemargin
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[int]{\topmargin}
+%    页眉距顶端 2.0cm，而 \cs{topmargin} 为 1in 处到页眉顶端的距离。
+%    \begin{macrocode}
+\dim_set:Nn \topmargin { 2.0cm - 1in }
+%    \end{macrocode}
+% \end{macro}
+%
+% \paragraph{脚注 Footnotes}
+% \begin{macro}[int]{\footnotesep}
+%    总是使用中易宋体 \cs{footnotesize}（9bp）在基线之上的高度。
+%    \begin{macrocode}
+\dim_set:Nn \l_tmpa_dim  { 9bp }
+\dim_set:Nn \footnotesep { \c_@@_ascender_ratio_simsun_tl \l_tmpa_dim }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[int]{\footins}
+%    \verb|\skip\footins| 设置为 11bp 的 Times New Roman 的无网格单倍行距，并可无限伸
+%    长。
+%    \begin{macrocode}
+\dim_set:Nn \l_tmpa_dim  { 11bp }
+\dim_set:Nn { \skip\footins }
+  { \c_@@_baseline_ratio_times_tl \l_tmpa_dim plus 1fil }
+%    \end{macrocode}
+% \end{macro}
+%
+% \paragraph{浮动体位置参数 Float placement parameters}
+% \begin{macro}[int]{\floatsep, \textfloatsep, \intextsep, \@fpsep}
+%    浮动体竖直间距统一设置为 12bp。
+%    \begin{macrocode}
+\dim_set:Nn \floatsep     { 12bp plus 2bp minus 2bp }
+\dim_set:Nn \textfloatsep { 12bp plus 2bp minus 2bp }
+\dim_set:Nn \intextsep    { 12bp plus 2bp minus 2bp }
+\dim_set:Nn \@fpsep       { 12bp plus 2fil}
 %    \end{macrocode}
 % \end{macro}
 %
