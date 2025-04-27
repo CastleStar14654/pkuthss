@@ -34,7 +34,7 @@
 ]
 \documentclass{l3doc}
 
-\usepackage[UTF8,linespread=1.1]{ctex}
+\usepackage[UTF8,linespread=1.1,fontset=ubuntu]{ctex}
 \newcommand\pkuthss{PKU\-\textsc{thss}3}
 
 \EnableCrossrefs
@@ -145,6 +145,52 @@
 %    \end{macrocode}
 %
 % \subsubsection{文档类加载时选项 Class loading-time options}
+% \begin{macro}
+%   {
+%     language, \l_@@_main_language_tl,
+%     traditional-chinese, \l_@@_traditional_chinese_bool,
+%     english-variant, \l_@@_english_variant_tl
+%   }
+%    设置论文正文的\textbf{主要}语言，会据此导入 \pkg{babel} 并影响“目录”“参考文献”等章节
+%    标题的本地化，影响西文单词的断字，还会影响无文档网格时“单倍行距”按照中易宋体还是 Times
+%    New Roman 设置。
+%
+%    北大似乎只允许中英日韩德俄法西八种语言的学位论文，因此只允许选择这些语言。中日韩语会按照
+%    中易宋体设置无网格单倍行距，其他语言按照 Times New Roman。
+%
+%    如果需要章节序号“第一章”等不按照正文语言本地化，请更改 chapter-localization 选项。
+%
+%    默认值为 chinese。中文的简体繁体需另行通过 traditional-chinese 选项设置。
+%
+%    英文变体通过 english-variant 指定。
+%
+%    这里将输入选项保存为 token list，因为众多 \pkg{babel} 的实现使用了 \cs{ifx} 进行
+%    语言判断，而存为 str 会把 catagory code 全部转成 12，导致 \cs{ifx} 失败。
+%    \begin{macrocode}
+    language .choices:nn =
+      {
+        chinese, english, japanese, korean,
+        german,  ngerman, russian,  french, spanish
+      }
+      {
+        \tl_set_eq:NN \l_@@_main_language_tl \l_keys_choice_tl
+      },
+    language .initial:n = chinese,
+    language .usage:n   = load,
+    traditional-chinese .bool_set:N = \l_@@_traditional_chinese_bool,
+    traditional-chinese .initial:n  = false,
+    traditional-chinese .default:n  = true,
+    traditional-chinese .usage:n    = load,
+    english-variant .choices:nn =
+      { american, australian, british, canadian, newzealand }
+      {
+        \tl_set_eq:NN \l_@@_english_variant_tl \l_keys_choice_tl
+      },
+    english-variant .initial:n  = american,
+    english-variant .usage:n    = load,
+%    \end{macrocode}
+% \end{macro}
+%
 % \subsubsection{文档类一般选项 Class general options}
 % \begin{macro}{thesis-type, \l_@@_thesis_type_str}
 %    论文类型。
@@ -232,6 +278,42 @@
 \LoadClass [ a4paper , zihao = -4 , linespread = 1.0 ] { ctexbook }
 %    \end{macrocode}
 %
+% \subsubsection{\pkg{babel} 语言设置 \pkg{babel} settings}
+%
+%    总是需要导入英文。
+%    \begin{macrocode}
+\PassOptionsToPackage { \l_@@_english_variant_tl } { babel }
+%    \end{macrocode}
+%    主要语言不是英文时，还需导入主要语言。
+%    \begin{macrocode}
+\str_if_eq:VnF \l_@@_main_language_tl { english }
+  {
+    \PassOptionsToPackage { \l_@@_main_language_tl } { babel }
+  }
+%    \end{macrocode}
+%    主要语言是中文或朝鲜/韩文时，需要将主要语言以“modern”形式导入。
+%    \begin{macrocode}
+\str_case:VnT \l_@@_main_language_tl
+  {
+    { chinese } { }
+    { korean }  { }
+  }
+  { \PassOptionsToPackage { provide = * } { babel } }
+%    \end{macrocode}
+%    导入 \pkg{babel}。
+%    \begin{macrocode}
+\RequirePackage { babel }
+%    \end{macrocode}
+%    主要语言非中文或英文时，需要将中文作为次要语言导入。
+%    \begin{macrocode}
+\str_case:VnF \l_@@_main_language_tl
+  {
+    { chinese } { }
+    { english } { }
+  }
+  { \AtBeginDocument { \babelprovide [ import ] { chinese } } }
+%    \end{macrocode}
+%
 % \subsection{用户设置接口及元数据 User settings API and metadata}
 % \begin{macro}{\pkusetup,\pkumetadata}
 %    简单设置为别名。设置为只可在导言区使用。
@@ -245,6 +327,35 @@
 %    \end{macrocode}
 % \end{macro}
 %
+%
+% \subsection{本地化 Localization}
+%    大多数本地化通过 \pkg{babel} 自动完成。
+%
+% \subsubsection{繁体中文 Traditional Chinese}
+%    \begin{macrocode}
+\bool_if:NT \l_@@_traditional_chinese_bool
+  {
+    \setlocalecaption { chinese } { ref }        { 參考文獻 }
+    \setlocalecaption { chinese } { bib }        { 參考文獻 }
+    \setlocalecaption { chinese } { appendix }   { 附錄 }
+    \setlocalecaption { chinese } { contents }   { 目錄 }
+    \setlocalecaption { chinese } { listfigure } { 插圖 }
+    \setlocalecaption { chinese } { figure }     { 圖 }
+    \setlocalecaption { chinese } { proof }      { 證明 }
+  }
+%    \end{macrocode}
+%
+% \subsubsection{朝鲜/韩文 Korean}
+%    需要保留谚文之间的空格。
+%    \begin{macrocode}
+\str_if_eq:VnF \l__pkuthss_main_language_tl { korean }
+  { \AtBeginDocument { \babelprovide [ import ] { korean } } }
+\AtBeginDocument
+  {
+    \addto \extraskorean   { \ctexset { space = true } }
+    \addto \noextraskorean { \ctexset { space = auto } }
+  }
+%    \end{macrocode}
 %
 %    \begin{macrocode}
 %</cls>
