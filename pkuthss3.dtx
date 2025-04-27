@@ -100,6 +100,76 @@
   }
 %    \end{macrocode}
 %
+% \subsection{内部函数与变量 Internal functions and variables}
+%
+% \begin{macro}
+%   {
+%     \@@_define_option:n, \@@_define_metadata:n,
+%     \@@_set_option:n,    \@@_set_metadata:n
+%   }
+%    用于便捷定义或设置文档类选项（option）与元数据（metadata）的简称。
+%    \begin{macrocode}
+\cs_new_protected:Nn \@@_define_option:n
+  { \keys_define:nn { pkuthss }            {#1} }
+\cs_new_protected:Nn \@@_define_metadata:n
+  { \keys_define:nn { pkuthss / metadata } {#1} }
+\cs_new_protected:Nn \@@_set_option:n
+  { \keys_set:nn    { pkuthss }            {#1} }
+\cs_new_protected:Nn \@@_set_metadata:n
+  { \keys_set:nn    { pkuthss / metadata } {#1} }
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{错误与警告 Errors and warnings}
+%    \begin{macrocode}
+\msg_new:nnn { pkuthss } { option-invalid }
+  { Option~`\l_keys_key_tl'~is~invalid. }
+%    \end{macrocode}
+%
+% \subsection{选项定义 Defining options}
+%    \begin{macrocode}
+\@@_define_option:n
+  {
+%    \end{macrocode}
+%
+% \subsubsection{其他未知选项 Other unknown options}
+%    使用 \cs[no-index]{IfClassLoadedTF} 判定该未知选项是否是在加载本文档类时给出的。若
+%    为加载时选项，则传给上游 \cls{ctexbook}，否则给出警告。
+%    \begin{macrocode}
+    unknown .code:n =
+      {
+        \IfClassLoadedTF { ctexbook }
+          { \msg_warning:nn { pkuthss } { option-invalid } }
+          { \PassOptionsToClass { \CurrentOption } { ctexbook } }
+      },
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+  }
+%    \end{macrocode}
+%
+%
+% \subsection{加载上游文档类与宏包 Loading upstream class and packages}
+%    处理选项后加载 \cls{ctexbook}。
+%    \begin{macrocode}
+\ProcessKeyOptions [ pkuthss ]
+\LoadClass [ a4paper , zihao = -4 , linespread = 1.0 ] { ctexbook }
+%    \end{macrocode}
+%
+% \subsection{用户设置接口及元数据 User settings API and metadata}
+% \begin{macro}{\pkusetup,\pkumetadata}
+%    简单设置为别名。设置为只可在导言区使用。
+%    \begin{macrocode}
+\NewDocumentCommand \pkusetup { m }
+  { \@@_set_option:n   {#1} }
+\NewDocumentCommand \pkumetadata { m }
+  { \@@_set_metadata:n {#1} }
+\@onlypreamble \pkusetup
+\@onlypreamble \pkumetadata
+%    \end{macrocode}
+% \end{macro}
+%
+%
 %    \begin{macrocode}
 %</cls>
 %    \end{macrocode}
