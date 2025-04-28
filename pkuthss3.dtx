@@ -102,6 +102,13 @@
 %
 % \subsection{内部函数与变量 Internal functions and variables}
 %
+% \begin{macro}{\l_@@_word_grid_size_dim}
+%    选项用到的变量。
+%    \begin{macrocode}
+\dim_new:N \l_@@_word_grid_size_dim
+%    \end{macrocode}
+% \end{macro}
+%
 % \begin{macro}
 %   {
 %     \@@_define_option:n, \@@_define_metadata:n,
@@ -136,6 +143,35 @@
 \@@_define_option:n
   {
 %    \end{macrocode}
+%
+% \subsubsection{文档类加载时选项 Class loading-time options}
+% \subsubsection{文档类一般选项 Class general options}
+% \begin{macro}{thesis-type, \l_@@_thesis_type_str}
+%    论文类型。
+%    \begin{macrocode}
+    thesis-type .choices:nn =
+      { bachelor, master, doctor, postdoc }
+      {
+        \str_set:NV \l_@@_thesis_type_str \l_keys_choice_tl
+      },
+    thesis-type .initial:n = doctor,
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{word-grid, \l_@@_word_grid_bool, word-grid-size}
+%    是否启用类似 MS Word 文档网格的行为，以及若启用，以 bp 为单位给出网格间距的值。
+%    \begin{macrocode}
+    word-grid      .bool_set:N = \l_@@_word_grid_bool,
+    word-grid      .initial:n  = true,
+    word-grid-size .code:n     =
+      {
+        \fp_set:Nn \l_tmpa_fp {#1}
+        \dim_set:Nn \l_@@_word_grid_size_dim
+          { \fp_eval:n \l_tmpa_fp bp }
+      },
+    word-grid-size .initial:n = 15.6,
+%    \end{macrocode}
+% \end{macro}
 %
 % \subsubsection{其他未知选项 Other unknown options}
 %    使用 \cs[no-index]{IfClassLoadedTF} 判定该未知选项是否是在加载本文档类时给出的。若
