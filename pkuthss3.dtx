@@ -357,9 +357,11 @@
 %   \c_@@_ascender_ratio_times_tl,
 % }
 %    中易宋体与 Times New Roman 在无网格“单倍行距”时行距以及基线以上高度相对于字号的比值。
+%    由于 \TeX{} 内部将长度运算时的小数转化为以 $2^{16} = 65536$ 为分母的分数，这里手动将
+%    中易宋体的行距倍数取为小于 1.3 的最大可能值，防止自动向上舍入。
 %    \begin{macrocode}
 \tl_const:Ne \c_@@_baseline_ratio_simsun_tl
-  { \fp_eval:n { 1.3 } }
+  { \fp_eval:n { floor ( 1.3 * 65536 ) / 65536 } }
 \tl_const:Ne \c_@@_baseline_ratio_times_tl
   { \fp_eval:n { 2355 / 2048 } }
 \tl_const:Ne \c_@@_ascender_ratio_simsun_tl
