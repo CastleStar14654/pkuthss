@@ -102,10 +102,28 @@
 %
 % \subsection{内部函数与变量 Internal functions and variables}
 %
+% \begin{macro}{}
+%    临时变量。
+%    \begin{macrocode}
+\tl_new:N  \l_@@_tmpa_tl
+\tl_new:N  \l_@@_tmpb_tl
+\tl_new:N  \l_@@_tmpc_tl
+\bool_new:N  \l_@@_tmpa_bool
+%    \end{macrocode}
+% \end{macro}
+%
 % \begin{macro}{\l_@@_word_grid_size_dim}
 %    选项用到的变量。
 %    \begin{macrocode}
 \dim_new:N \l_@@_word_grid_size_dim
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\l_@@_fontset_use_ctex_bool}
+%    本变量记录用户是否指定了 C\TeX{} 的字体配置；若没有，则本文档类进行自动配置。
+%    \begin{macrocode}
+\bool_new:N \l_@@_fontset_use_ctex_bool
+\PassOptionsToClass { fontset = none } { ctexbook }
 %    \end{macrocode}
 % \end{macro}
 %
@@ -145,6 +163,25 @@
 %    \end{macrocode}
 %
 % \subsubsection{文档类加载时选项 Class loading-time options}
+% \begin{macro}{fontset, use-noto}
+%    如果用户希望使用 C\TeX{} 的字体配置或自行配置字体，则需指定本选项的值。
+%
+%    如果用户希望宋、黑体使用思源（Noto）系列，则需指定 \verb|use-noto| 选项。
+%    \begin{macrocode}
+    fontset .code:n =
+      {
+        \bool_set_eq:NN \l_@@_fontset_use_ctex_bool \c_true_bool
+        \PassOptionsToClass { \CurrentOption } { ctexbook }
+      },
+    fontset .value_required:n = true,
+    fontset .usage:n          = load,
+    use-noto .bool_set:N = \l_@@_fontset_use_noto_bool,
+    use-noto .initial:n  = false,
+    use-noto .default:n  = true,
+    use-noto .usage:n    = load,
+%    \end{macrocode}
+% \end{macro}
+%
 % \begin{macro}
 %   {
 %     language, \l_@@_main_language_tl,
@@ -297,6 +334,10 @@
 \LoadClass [ a4paper , zihao = -4 , linespread = 1.0 ] { ctexbook }
 %    \end{macrocode}
 %
+%    \begin{macrocode}
+\RequirePackage { unicode-math }
+%    \end{macrocode}
+%
 % \subsubsection{\pkg{babel} 语言设置 \pkg{babel} settings}
 %
 %    总是需要导入英文。
@@ -348,6 +389,215 @@
 %
 % \subsection{文档设置 Document layout}
 % \subsubsection{字体 Font families}
+%    警告信息。
+%    \begin{macrocode}
+\msg_new:nnn { pkuthss } { noto-not-found }
+  {
+    You~set~`use-noto'~option,~but~Noto~CJK~font~is~not~found.\\
+    Use~Fandol~instead.
+  }
+%    \end{macrocode}
+%    如果用户没有指定 \verb|fontset| 选项，则进行自动配置。C\TeX{} 内部会将字体设置的参数
+%    完全展开，因此不用做相关处理。
+%    \begin{macrocode}
+\bool_if:NF \l_@@_fontset_use_ctex_bool
+  {
+%    \end{macrocode}
+% \paragraph{衬线字体}
+%    直立体选用宋体，斜体选用仿宋。
+%
+% \subparagraph{仿宋}
+%    按照 Windows、Mac、Fandol 的顺序设置。仿宋也设置为等宽字体
+%    \begin{macrocode}
+    \fontspec_font_if_exist:nTF { FangSong }
+      { \tl_set:Nn \l_@@_tmpa_tl { FangSong } }
+      {
+        \fontspec_font_if_exist:nTF { STFangsong }
+          { \tl_set:Nn \l_@@_tmpa_tl { STFangSong } }
+          { \tl_set:Nn \l_@@_tmpa_tl { FandolFang-Regular.otf } }
+      }
+    \setCJKfamilyfont { zhfs } { \l_@@_tmpa_tl } [ AutoFakeBold = 2 ]
+    \setCJKmonofont   { \l_@@_tmpa_tl } [ AutoFakeBold = 2 ]
+    \tl_set:Ne \l_@@_tmpa_tl
+      {
+        ItalicFont         = \l_@@_tmpa_tl,
+        BoldItalicFont     = \l_@@_tmpa_tl,
+        BoldItalicFeatures = { FakeBold = 2 }
+      }
+%    \end{macrocode}
+% \subparagraph{宋体}
+%    先默认设置成 Fandol，后按照 Windows、Mac、Noto 的优先级顺序覆盖；如果用户选择了
+%    \verb|use-noto|，则 Noto 优先级最高。
+%
+%    Fandol 自带粗宋体。
+%    \begin{macrocode}
+    \tl_set:Nn  \l_@@_tmpb_tl { FandolSong-Regular.otf }
+    \tl_clear:N \l_@@_tmpc_tl
+%    \end{macrocode}
+%    临时变量 \cs{l_@@_tmpa_bool} 保存 Noto CJK 系列字体是否存在。
+%    \begin{macrocode}
+    \bool_set_eq:NN \l_@@_tmpa_bool \c_true_bool
+    \fontspec_font_if_exist:nF { Noto~Serif~CJK~SC }
+      {
+        \bool_if:NT \l_@@_fontset_use_noto_bool
+          {
+%    \end{macrocode}
+%    有可能用户使用的是非 Linux 系统下的 MiK\TeX{}，通过给出字体文件名促使自动安装
+%    \pkg{notocjksc} 宏包。
+%    \begin{macrocode}
+            \fontspec_font_if_exist:nF { NotoSerifCJKsc-Regular.otf }
+              {
+                msg_warning:nn { pkuthss } { noto-not-found }
+                \bool_set_eq:NN \l_@@_tmpa_bool \c_false_bool
+              }
+          }
+      }
+    \bool_if:NT \l_@@_tmpa_bool
+      {
+        \tl_set:Nn \l_@@_tmpb_tl { Noto~Serif~CJK~SC~Light }
+        \tl_set:Nn \l_@@_tmpc_tl { BoldFont = Noto~Serif~CJK~SC~SemiBold }
+      }
+    \bool_if:NF \l_@@_fontset_use_noto_bool
+      {
+        \fontspec_font_if_exist:nTF { SimSun }
+          {
+            \tl_set:Nn \l_@@_tmpb_tl { SimSun }
+            \tl_set:Nn \l_@@_tmpc_tl { AutoFakeBold = 2 }
+          }
+          {
+            \fontspec_font_if_exist:nT { Songti~SC }
+              {
+                \tl_set:Nn  \l_@@_tmpb_tl { Songti~SC }
+                \tl_clear:N \l_@@_tmpc_tl
+              }
+          }
+      }
+    \setCJKfamilyfont { zhsong }
+      { \l_@@_tmpb_tl } [ \l_@@_tmpc_tl ]
+    \setCJKmainfont   { \l_@@_tmpb_tl }
+      [ \l_@@_tmpc_tl , \l_@@_tmpa_tl ]
+%    \end{macrocode}
+% \paragraph{无衬线字体}
+%    直立体选用黑体，斜体选用楷体。
+%
+% \subparagraph{楷体}
+%    类似仿宋的设置顺序，按照 Windows、Mac、文鼎 UKai、文鼎简中楷的顺序设置。作为最后备份，
+%    文鼎简中楷使用文件名给定。
+%
+%    Mac 下的系统楷体有自带粗体字形，不需要设置伪粗体。
+%    \begin{macrocode}
+    \tl_set:Nn \l_@@_tmpb_tl { AutoFakeBold = 2 }
+    \fontspec_font_if_exist:nTF { KaiTi }
+      { \tl_set:Nn \l_@@_tmpa_tl { KaiTi } }
+      {
+        \fontspec_font_if_exist:nTF { Kaiti~SC }
+          {
+            \tl_set:Nn \l_@@_tmpa_tl { Kaiti~SC }
+            \tl_clear:N \l_@@_tmpb_tl
+          }
+          {
+            \fontspec_font_if_exist:nTF { AR~PL~UKai~CN }
+              { \tl_set:Nn \l_@@_tmpa_tl { AR~PL~UKai~CN } }
+              { \tl_set:Nn \l_@@_tmpa_tl { gkai00mp.ttf } }
+          }
+      }
+    \setCJKfamilyfont { zhkai }
+      { \l_@@_tmpa_tl } [ \l_@@_tmpb_tl ]
+    \tl_if_empty:NTF \l_@@_tmpb_tl
+      { \tl_set:Ne \l_@@_tmpa_tl { ItalicFont = \l_@@_tmpa_tl } }
+      {
+        \tl_set:Ne \l_@@_tmpa_tl
+          {
+            ItalicFont         = \l_@@_tmpa_tl,
+            BoldItalicFont     = \l_@@_tmpa_tl,
+            BoldItalicFeatures = { FakeBold = 2 }
+          }
+      }
+%    \end{macrocode}
+% \subparagraph{黑体}
+%    类似宋体，先默认设置成 Fandol，后按照 Windows、Mac、Noto 的优先级顺序覆盖。
+%
+%    Fandol 自带粗黑体。
+%    \begin{macrocode}
+    \tl_set:Nn  \l_@@_tmpb_tl { FandolHei-Regular.otf }
+    \tl_clear:N \l_@@_tmpc_tl
+    \bool_if:NT \l_@@_tmpa_bool
+      {
+        \tl_set:Nn \l_@@_tmpb_tl { Noto~Sans~CJK~SC~DemiLight }
+        \tl_set:Nn \l_@@_tmpc_tl { BoldFont = Noto~Sans~CJK~SC~Medium }
+      }
+    \bool_if:NF \l_@@_fontset_use_noto_bool
+      {
+        \fontspec_font_if_exist:nTF { SimHei }
+          {
+            \tl_set:Nn \l_@@_tmpb_tl { SimHei }
+            \tl_set:Nn \l_@@_tmpc_tl { AutoFakeBold = 2 }
+          }
+          {
+            \fontspec_font_if_exist:nT { Heiti~SC~Light }
+              {
+                \tl_set:Nn \l_@@_tmpb_tl { Heiti~SC~Light }
+                \tl_set:Nn \l_@@_tmpc_tl { BoldFont = Heiti~SC~Medium }
+              }
+          }
+      }
+    \setCJKfamilyfont { zhhei }
+      { \l_@@_tmpb_tl } [ \l_@@_tmpc_tl ]
+    \setCJKsansfont   { \l_@@_tmpb_tl }
+      [ \l_@@_tmpc_tl , \l_@@_tmpa_tl ]
+%    \end{macrocode}
+%    最后定义字体命令。
+%    \begin{macrocode}
+    \NewDocumentCommand \songti   { } { \CJKfamily { zhsong  } }
+    \NewDocumentCommand \heiti    { } { \CJKfamily { zhhei   } }
+    \NewDocumentCommand \fangsong { } { \CJKfamily { zhfs    } }
+    \NewDocumentCommand \kaishu   { } { \CJKfamily { zhkai   } }
+  }
+%    \end{macrocode}
+%
+% \paragraph{西文字体}
+%    存在商用字体则使用，否则使用发行版自带的开源版本。
+%
+%    发行版字体使用文件名指定，以便于 MiK\TeX{} on-the-fly 安装。
+%    \begin{macrocode}
+\fontspec_font_if_exist:nTF { Times~New~Roman }
+  { \setmainfont { Times~New~Roman } }
+  {
+    \setmainfont { texgyretermes }
+      [
+        Extension      = .otf,
+        UprightFont    = *-regular,
+        BoldFont       = *-bold,
+        ItalicFont     = *-italic,
+        BoldItalicFont = *-bolditalic
+      ]
+  }
+\fontspec_font_if_exist:nTF { Arial }
+  { \setsansfont { Arial } }
+  { \setsansfont { TeX~Gyre~Heros } }
+\fontspec_font_if_exist:nTF { Courier~New }
+  { \setmonofont { Courier~New } }
+  { \setmonofont { TeX~Gyre~Cursor } }
+%    \end{macrocode}
+%
+% \paragraph{数学字体}
+%    选用字符覆盖较为完整的 XITS 系列。
+%    \begin{macrocode}
+\setmathfont { XITSMath-Regular.otf }
+%    \end{macrocode}
+%    XITS 表示分数线的斜杠过短、求和号稍小，用 Latin Modern 的字形替换。
+%    \begin{macrocode}
+\setmathfont { latinmodern-math.otf } [ range = { "002F, "2211 } ]
+%    \end{macrocode}
+%    使 \cs{mathcal} 字形正确映射。大写字形来自 XITS，更接近 \LaTeX{} 原本字形；小写字形
+%    来自仅有提供此字形的 STIX2。
+%    \begin{macrocode}
+\setmathfont { XITSMath-Regular.otf }
+  [ range = { cal/Latin, bfcal/Latin }, StylisticSet = 1 ]
+\setmathfont { STIXTwoMath-Regular.otf }
+  [ range = { cal/latin, bfcal/latin } ]
+%    \end{macrocode}
+%
 % \subsubsection{字号 Font sizes}
 % \paragraph{辅助函数与变量}
 % \begin{macro}{
@@ -777,12 +1027,12 @@
 %    \end{macrocode}
 % \end{macro}
 %
-% \begin{macro}{\l_@@_header_rule_dim, \@@_boxed_header:n}
+% \begin{macro}{\c_@@_header_rule_dim, \@@_boxed_header:n}
 %    定义生成带下方横线线的页眉的函数 \cs{@@_boxed_header:n}。横线长度为文字宽度加上 3bp，
 %    存于 \cs{l_@@_header_rule_dim} 中；横线与文字底端间距 1bp。文字行距按照中易宋体计算，
 %    以达到全局统一的效果。
 %    \begin{macrocode}
-\dim_const:Nn \l_@@_header_rule_dim { \textwidth + 3bp }
+\dim_const:Nn \c_@@_header_rule_dim { \textwidth + 3bp }
 \cs_new:Nn \@@_boxed_header:n
   {
     \tex_hss:D
@@ -790,10 +1040,10 @@
       {
         \@@_set_cjk_baseline:
         \normalfont \@@_header_footer_size:
-        \hbox_to_wd:nn { \l_@@_header_rule_dim }
+        \hbox_to_wd:nn { \c_@@_header_rule_dim }
           { \strut \tex_hss:D #1 \tex_hss:D }
         \skip_vertical:n { 1bp }
-        \tex_hrule:D height 0.75bp width \l_@@_header_rule_dim depth 0bp
+        \tex_hrule:D height 0.75bp width \c_@@_header_rule_dim depth 0bp
       }
     \tex_hss:D
   }
