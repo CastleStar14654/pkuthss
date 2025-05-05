@@ -327,6 +327,303 @@
 %    \end{macrocode}
 % \end{macro}
 %
+% \subsection{文档设置 Document layout}
+% \subsubsection{字体 Font families}
+% \subsubsection{字号 Font sizes}
+% \paragraph{辅助函数与变量}
+% \begin{macro}{
+%   \c_@@_baseline_ratio_simsun_tl,
+%   \c_@@_baseline_ratio_times_tl,
+%   \c_@@_ascender_ratio_simsun_tl,
+%   \c_@@_ascender_ratio_times_tl,
+% }
+%    中易宋体与 Times New Roman 在无网格“单倍行距”时行距以及基线以上高度相对于字号的比值。
+%    \begin{macrocode}
+\tl_const:Ne \c_@@_baseline_ratio_simsun_tl
+  { \fp_eval:n { 1.3 } }
+\tl_const:Ne \c_@@_baseline_ratio_times_tl
+  { \fp_eval:n { 2355 / 2048 } }
+\tl_const:Ne \c_@@_ascender_ratio_simsun_tl
+  { \fp_eval:n { 0.15 + 220 / 256 } }
+\tl_const:Ne \c_@@_ascender_ratio_times_tl
+  { \fp_eval:n { 1912 / 2048 } }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\l_@@_baseline_ratio_tl, \l_@@_ascender_ratio_tl}
+%    当前使用的行距以及基线以上高度相对于字号的比值。
+%    \begin{macrocode}
+\tl_new:N \l_@@_baseline_ratio_tl
+\tl_new:N \l_@@_ascender_ratio_tl
+\tl_set_eq:NN \l_@@_baseline_ratio_tl
+  \c_@@_baseline_ratio_simsun_tl
+\tl_set_eq:NN \l_@@_ascender_ratio_tl
+  \c_@@_ascender_ratio_simsun_tl
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_set_cjk_baseline:, \@@_set_latin_baseline:}
+%    简便设置的简写。
+%    \begin{macrocode}
+\cs_new:Nn \@@_set_cjk_baseline:
+  {
+    \tl_set_eq:NN \l_@@_baseline_ratio_tl
+      \c_@@_baseline_ratio_simsun_tl
+    \tl_set_eq:NN \l_@@_ascender_ratio_tl
+      \c_@@_ascender_ratio_simsun_tl
+  }
+\cs_new:Nn \@@_set_latin_baseline:
+  {
+    \tl_set_eq:NN \l_@@_baseline_ratio_tl
+      \c_@@_baseline_ratio_times_tl
+    \tl_set_eq:NN \l_@@_ascender_ratio_tl
+      \c_@@_ascender_ratio_times_tl
+  }
+\@@_set_latin_baseline:
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{function}{\@@_setfontsize:Nnnn}
+%   \begin{syntax}
+%     \cs{@@_setfontsize:Nnnn} \meta{command} \marg{font size} \marg{baseline skip} \marg{linespacing ratio}
+%   \end{syntax}
+%    定义命令 \meta{command}，使其进行类似 MS Word 的字号（\meta{font size}）与行距设置，
+%    并相应调整 \cs{strutbox}。\meta{linespacing ratio} 默认值为 1。
+%
+%    若给定 \meta{baseline skip}，则相当于 Word 中的“固定值/最小值”行距设置，最后行距为
+%    $\meta{linespacing ratio}\times\meta{baseline skip}$
+%
+%    若留空 \meta{baseline skip}，则相当于 Word 中的倍数行距设置。倍数行距的行为会根据是
+%    否启用网格（\cmd{word-grid}）而有所不同。同时，具体字体也对倍数行距的行为有所影响。
+%
+%    目前的实现为全部假设为中易宋体。
+%
+%    启用网格时，中易宋体与 Times New Roman 的基线位置几乎没有差别；不启用网格时（如脚注）
+%    两者差异较大。
+% \end{function}
+% \begin{macro}{\@@_setfontsize:Nnnn}
+%    首先保存行距倍数，并判断有无给出具体行距数值。
+%    \begin{macrocode}
+\cs_new:Nn \@@_setfontsize:Nnnn
+  {
+    {
+      \tl_set:Nn \l_tmpa_tl {#4}
+      \tl_if_empty:nTF {#3}
+%    \end{macrocode}
+%    1. 倍数情况。设置倍数 $n$ 的默认值为 1。
+%    \begin{macrocode}
+        {
+          \tl_if_empty:NT \l_tmpa_tl
+            { \tl_set:Nn \l_tmpa_tl { 1 } }
+%    \end{macrocode}
+%    \quad 获得基础值：无网格下单倍行距情况的行距 $H$ 与基线以上高度 $h$。
+%    \begin{macrocode}
+          \dim_gset:Nn \g_tmpb_dim {#2}
+          \dim_gset:Nn \g_tmpa_dim { \l_@@_baseline_ratio_tl \g_tmpb_dim }
+          \dim_gset:Nn \g_tmpb_dim { \l_@@_ascender_ratio_tl \g_tmpb_dim }
+          \bool_if:NTF \l_@@_word_grid_bool
+%    \end{macrocode}
+%    \quad (a) 有高度 $L$ 的网格时，行距为 $H'=\max\{\lceil H/L \rceil,n\}\times L$。
+%    基线以上高度为 $h'=h + (H'-h)/2$。
+%    \begin{macrocode}
+            {
+              \tl_set:Ne \l_tmpb_tl
+                {
+                  \dim_ratio:nn
+                    { \g_tmpa_dim } { \l_@@_word_grid_size_dim }
+                }
+              \tl_set:Ne \l_tmpa_tl
+                { \fp_eval:n { max( ceil ( \l_tmpb_tl ) , \l_tmpa_tl ) } }
+              \dim_set:Nn \l_tmpa_dim
+                { \l_tmpa_tl \l_@@_word_grid_size_dim }
+              \dim_gadd:Nn \g_tmpb_dim { ( \l_tmpa_dim - \g_tmpa_dim ) / 2 }
+              \dim_gset_eq:NN \g_tmpa_dim \l_tmpa_dim
+            }
+%    \end{macrocode}
+%    \quad (a) 无网格时，行距 $H'=nL$，基线以上高度保持为 $h$。
+%    \begin{macrocode}
+            {
+              \dim_gset:Nn \g_tmpa_dim { \l_tmpa_tl \g_tmpa_dim }
+            }
+        }
+%    \end{macrocode}
+%    2. 固定行距，基线在 80\% 行距的位置。
+%    \begin{macrocode}
+        {
+          \dim_gset:Nn \g_tmpa_dim {#3}
+          \dim_gset:Nn \g_tmpa_dim { \l_tmpa_tl \g_tmpa_dim }
+          \tl_set:Nn  \l_tmpa_tl  { 0.8 }
+          \dim_gset:Nn \g_tmpb_dim { \l_tmpa_tl \g_tmpa_dim }
+        }
+      }
+%    \end{macrocode}
+%    现在，\cs{g_tmpa_dim} 就是行距，\cs{g_tmpb_dim} 就是一行基线之上的高度。
+%    \begin{macrocode}
+    \@setfontsize #1 {#2} { \g_tmpa_dim }
+    \dim_gsub:Nn \g_tmpa_dim { \g_tmpb_dim }
+    \hbox_set:Nn \strutbox
+      {
+        \tex_vrule:D height \g_tmpb_dim depth \g_tmpa_dim width 0bp
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_word_grid_tmp_off:n}
+%    Excecute the argument with \cs{l_@@_word_grid_bool} temporarily set as false.
+%
+%    \cs{l_tmpa_bool} is used to save the value of \cs{l_@@_word_grid_bool}.
+%    \begin{macrocode}
+\cs_new:Nn \@@_word_grid_tmp_off:n
+  {
+    \bool_set_eq:NN \l_tmpa_bool \l_@@_word_grid_bool
+    \bool_set_false:N \l_@@_word_grid_bool
+    #1
+    \bool_set_eq:NN \l_@@_word_grid_bool \l_tmpa_bool
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \paragraph{具体定义}
+% \begin{macro}{\normalsize}
+%    正文使用小四号（12bp）字，行距固定为 20bp。本字号也用于三级节标题。
+%
+%    表达式上下间距格式要求为 6bp，但行距为同字号的单倍行距（15.6bp），因此稍微减小了间距值。
+%    推测该间距要求目的是使空白部分的高度与字号相当，因此之后 \cs{small}、
+%    \cs{footnotesize} 也相应进行设置。
+%    \begin{macrocode}
+\RenewDocumentCommand \normalsize { }
+  {
+    \@@_setfontsize:Nnnn \normalsize { 12bp } { 20bp } { }
+    \abovedisplayskip 4bp plus 1bp minus 2bp
+    \abovedisplayshortskip \c_zero_dim plus 1bp
+    \belowdisplayshortskip \abovedisplayskip
+    \belowdisplayskip \abovedisplayskip
+    \tl_set_eq:NN \@listi \@listI
+  }
+\normalsize
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\small}
+%    用于图名和表名，“使用 11bp 字，单倍行距”。
+%    \begin{macrocode}
+\RenewDocumentCommand \small { }
+  {
+    \@@_setfontsize:Nnnn \small { 11bp } { } { 1 }
+    \abovedisplayskip 6.4bp plus 1.5bp minus 3bp
+    \abovedisplayshortskip \c_zero_dim plus 1.5bp
+    \belowdisplayshortskip \abovedisplayskip
+    \belowdisplayskip \abovedisplayskip
+    \tl_set:cn { @listi }
+      {
+        \leftmargin\leftmargini
+        \topsep 4.6bp plus 1.5bp minus 2bp
+        \parsep \parskip
+        \itemsep \parsep
+        \listparindent \parindent
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\footnotesize}
+%    用于脚注，“使用 9bp 字，单倍行距”，不对齐到网格。
+%    \begin{macrocode}
+\RenewDocumentCommand \footnotesize { }
+  {
+    \@@_word_grid_tmp_off:n
+      { \@@_setfontsize:Nnnn \footnotesize { 9bp } { } { 1 } }
+    \abovedisplayskip 6.3bp plus 1.5bp minus 3bp
+    \abovedisplayshortskip \c_zero_dim plus 1.5bp
+    \belowdisplayshortskip \abovedisplayskip
+    \belowdisplayskip \abovedisplayskip
+    \tl_set:cn { @listi }
+      {
+        \leftmargin\leftmargini
+        \topsep 2.7bp plus 1bp minus 1bp
+        \parsep \parskip
+        \itemsep \parsep
+        \listparindent \parindent
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\large, \Large, \LARGE, \huge, \Huge}
+%    \cs{large} 用于二级节标题，13bp 字，行距固定为 20bp。
+%    \begin{macrocode}
+\RenewDocumentCommand \large { }
+  { \@@_setfontsize:Nnnn \large { 13bp } { 20bp } { } }
+%    \end{macrocode}
+%    \cs{Large} 用于一级节标题，14bp 字，行距固定为 20bp。
+%    \begin{macrocode}
+\RenewDocumentCommand \Large { }
+  { \@@_setfontsize:Nnnn \Large { 14bp } { 20bp } { } }
+%    \end{macrocode}
+%    \cs{LARGE} 用于封面上元数据值以及章标题，16bp，单倍行距。
+%    \begin{macrocode}
+\RenewDocumentCommand \LARGE { }
+  { \@@_setfontsize:Nnnn \LARGE { 16bp } { } { 1 } }
+%    \end{macrocode}
+%    \cs{huge} 和 \cs{Huge} 分别用于封面上的标题和“研究生学位论文”，26bp 和 36bp，单倍行距。
+%    \begin{macrocode}
+\RenewDocumentCommand \huge { }
+  { \@@_setfontsize:Nnnn \huge { 26bp } { } { 1 } }
+\RenewDocumentCommand \Huge { }
+  { \@@_setfontsize:Nnnn \Huge { 36bp } { } { 1 } }
+%    \end{macrocode}
+%    \begin{macrocode}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\bibfontsize}
+%    参考文献表要求字号 10.5bp，行距固定值 16bp。
+%    \begin{macrocode}
+\NewDocumentCommand \bibfontsize { }
+  { \@@_setfontsize:Nnnn \bibfontsize { 10.5bp } { 16bp } { } }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\tablenotesize}
+%    表格附注要求字号 10.5bp，单倍行距。
+%    \begin{macrocode}
+\NewDocumentCommand \tablenotesize { }
+  { \@@_setfontsize:Nnnn \tablenotesize { 10.5bp } { } { 1 } }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_timu_size:}
+%    封面上“题目”二字的字号。
+%    \begin{macrocode}
+\cs_new_protected:Nn \@@_timu_size:
+  { \@@_setfontsize:Nnnn \@@_timu_size: { 22bp } { } { 1 } }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_meta_class_size:}
+%    封面上“姓名”等字的字号。
+%    \begin{macrocode}
+\cs_new_protected:Nn \@@_meta_class_size:
+  { \@@_setfontsize:Nnnn \@@_meta_class_size: { 15bp } { } { 1 } }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_header_footer_size:}
+%    页眉页脚字号（五号字），不对齐到网格。
+%    \begin{macrocode}
+\cs_new_protected:Nn \@@_header_footer_size:
+  {
+    \@@_word_grid_tmp_off:n
+      {
+        \@@_setfontsize:Nnnn \@@_header_footer_size:
+          { 10.5bp } { } { 1 }
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
 %
 % \subsection{本地化 Localization}
 %    大多数本地化通过 \pkg{babel} 自动完成。
@@ -354,6 +651,22 @@
   {
     \addto \extraskorean   { \ctexset { space = true } }
     \addto \noextraskorean { \ctexset { space = auto } }
+  }
+%    \end{macrocode}
+%
+% \subsubsection{日韩字体与 CJK 行距 Japanese and Korean fonts and CJK line spacing}
+%    字体暂未配置。
+%    \begin{macrocode}
+\str_if_eq:VnF \l__pkuthss_main_language_tl { japanese }
+  { \AtBeginDocument { \babelprovide { japanese } } }
+\AtBeginDocument
+  {
+    \addto \extraschinese    { \@@_set_cjk_baseline: }
+    \addto \noextraschinese  { \@@_set_latin_baseline: }
+    \addto \extrasjapanese   { \@@_set_cjk_baseline: }
+    \addto \noextrasjapanese { \@@_set_latin_baseline: }
+    \addto \extraskorean     { \@@_set_cjk_baseline: }
+    \addto \noextraskorean   { \@@_set_latin_baseline: }
   }
 %    \end{macrocode}
 %
