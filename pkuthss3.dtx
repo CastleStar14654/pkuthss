@@ -558,10 +558,11 @@
 % \paragraph{西文字体}
 %    存在商用字体则使用，否则使用发行版自带的开源版本。
 %
-%    发行版字体使用文件名指定，以便于 MiK\TeX{} on-the-fly 安装。
+%    发行版字体使用文件名指定，以便于 MiK\TeX{} on-the-fly 安装。Times New Roman 需要
+%    手动打开连字。
 %    \begin{macrocode}
 \fontspec_font_if_exist:nTF { Times~New~Roman }
-  { \setmainfont { Times~New~Roman } }
+  { \setmainfont { Times~New~Roman } [ Ligatures = Rare ] }
   {
     \setmainfont { texgyretermes }
       [
