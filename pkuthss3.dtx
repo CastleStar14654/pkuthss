@@ -755,6 +755,78 @@
 %    \end{macrocode}
 % \end{macro}
 %
+% \subsubsection{页面样式 Page styles}
+%    页面样式会定义页眉与页脚。
+%
+% \begin{macro}[int]{pkuthss-thesis-type, pkuthss-chapter}
+%    使用新的标记机制，定义本文档类的标记类型。
+%    \begin{macrocode}
+\mark_new_class:n { pkuthss-thesis-type }
+\mark_new_class:n { pkuthss-chapter }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\l_@@_header_rule_dim, \@@_boxed_header:n}
+%    定义生成带下方横线线的页眉的函数 \cs{@@_boxed_header:n}。横线长度为文字宽度加上 3bp，
+%    存于 \cs{l_@@_header_rule_dim} 中；横线与文字底端间距 1bp。文字行距按照中易宋体计算，
+%    以达到全局统一的效果。
+%    \begin{macrocode}
+\dim_const:Nn \l_@@_header_rule_dim { \textwidth + 3bp }
+\cs_new:Nn \@@_boxed_header:n
+  {
+    \tex_hss:D
+    \vbox_top:n
+      {
+        \@@_set_cjk_baseline:
+        \normalfont \@@_header_footer_size:
+        \hbox_to_wd:nn { \l_@@_header_rule_dim }
+          { \strut \tex_hss:D #1 \tex_hss:D }
+        \skip_vertical:n { 1bp }
+        \tex_hrule:D height 0.75bp width \l_@@_header_rule_dim depth 0bp
+      }
+    \tex_hss:D
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[int]{\ps@pkuthss}
+%    格式要求的页眉页脚样式。
+%    \begin{macrocode}
+\cs_new:cpn { ps@pkuthss }
+  {
+    \tl_set:cn { @oddfoot }
+      {
+        \normalfont \@@_header_footer_size:
+        \tex_hfil:D \thepage \tex_hfil:D
+      }
+    \tl_set_eq:cc { @evenfoot } { @oddfoot }
+    \tl_set:cn { @evenhead }
+      {
+        \@@_boxed_header:n
+          { \mark_use_last:nn { page } { pkuthss-thesis-type } }
+      }
+    \tl_set:cn { @oddhead }
+      {
+        \@@_boxed_header:n
+          { \mark_use_last:nn { page } { pkuthss-chapter } }
+      }
+    \cs_set:cpn { @mkboth } ##1##2
+      { \mark_insert:nn { pkuthss-chapter } {##2} }
+    \cs_set:Npn \chaptermark ##1
+      {
+        \mark_insert:nn { pkuthss-chapter }
+          {
+            \CTEXifname
+              { \CTEXthechapter \skip_horizontal:n { 1\ccwd } }
+              { }
+            ##1
+          }
+      }
+    \cs_set_eq:NN \sectionmark \use_none:n
+  }
+%    \end{macrocode}
+% \end{macro}
+%
 %
 % \subsection{本地化 Localization}
 %    大多数本地化通过 \pkg{babel} 自动完成。
