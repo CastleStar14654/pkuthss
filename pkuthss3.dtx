@@ -1638,6 +1638,92 @@
 %    \end{macrocode}
 % \end{macro}
 %
+% \subsubsection{封面实例及用户函数 Titlepage instances and user functions}
+% \begin{macro}{\maketitle}
+%    可选参数用于本科毕业论文设置英文标题字号。
+%    \begin{macrocode}
+\RenewDocumentCommand \maketitle { o }
+  {
+    \tl_if_novalue:nF {#1}
+      { \EditInstance { titlepage } { bachelor } { english-title-size = #1 } }
+    \exp_args:Nne \UseInstance { titlepage }
+      {
+        \l_@@_thesis_type_str
+        \bool_if:NT \l_@@_anonymous_bool { -anonymous }
+      }
+    \thispagestyle { empty }
+    \cleardoublepage
+    \@@_copyright_declaration:
+    \newpage
+    \thispagestyle { empty }
+    \cleardoublepage
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{templateinstancedecl}
+%   {
+%     titlepage/doctor, titlepage/doctor-anonymous,
+%     titlepage/master, titlepage/master-anonymous,
+%     titlepage/bachelor
+%   }
+%    为本硕博定义实例
+%    \begin{macrocode}
+\clist_map_inline:nn
+  { doctor , master }
+  {
+    \DeclareInstance { titlepage } {#1} { thesis }
+      { thesis-name = \prop_item:Nn \l_@@_metadata_label_prop {#1} }
+    \DeclareInstance { titlepage } { #1 -anonymous } { anonymous }
+      {
+        thesis-name =
+          \prop_item:Nn \l_@@_metadata_label_prop { #1 -header }
+      }
+  }
+\DeclareInstance { titlepage } { bachelor } { thesis }
+  {
+    thesis-name        =
+      \prop_item:Nn \l_@@_metadata_label_prop { bachelor },
+    before-logo-skip   = 0pt,
+    after-title-skip   = 0pt plus 1fill,
+    after-meta-skip    = 0pt plus 1fill,
+    after-date-skip    = 0pt plus 0.5fill,
+    show-english-title = true,
+    show-direction     = false,
+    show-degree-type   = false
+  }
+%    \end{macrocode}
+% \end{templateinstancedecl}
+%
+% \subsubsection{声明 Declarations}
+% \begin{macro}{\@@_copyright_declaration:}
+%    定义简繁体两个版本。
+%    \begin{macrocode}
+\bool_if:NTF \l_@@_traditional_chinese_bool
+  {
+    \cs_new:Nn \@@_copyright_declaration:
+      {
+        \chapter*{版權聲明}
+        \thispagestyle{empty}
+        任何收存和保管本論文各種版本的單位和個人，
+        未經本論文作者同意，不得將本論文轉借他人，
+        亦不得隨意複製、抄錄、拍照或以任何方式傳播。
+        否則，引起有礙作者著作權之問題，將可能承擔法律責任。
+      }
+  }
+  {
+    \cs_new:Nn \@@_copyright_declaration:
+      {
+        \chapter*{版权声明}
+        \thispagestyle{empty}
+        任何收存和保管本论文各种版本的单位和个人，
+        未经本论文作者同意，不得将本论文转借他人，
+        亦不得随意复制、抄录、拍照或以任何方式传播。
+        否则，引起有碍作者著作权之问题，将可能承担法律责任。
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
 %
 % \subsubsection{章节 Chapters and sections}
 % \begin{macro}{\chapter}
