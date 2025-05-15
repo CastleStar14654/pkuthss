@@ -1818,6 +1818,93 @@
   }
 %    \end{macrocode}
 %
+% \subsubsection{列表 Lists}
+% \paragraph{一般列表参数 General list parameters}
+%    列表格式并没有任何规定。本文档类做一些简单设置。
+%
+% \begin{macro}[int]{\leftmargin, \leftmargini}
+%    最外层的列表做悬挂缩进 2 汉字字符，与正文的首行缩进对齐。
+%
+%    此外，\cs{leftmargini} 还会在文档类结尾被隐式设置成左对齐行间公式的缩进值
+%    （\cs{mathindent}）。格式要求也为 2 汉字字符。
+%    \begin{macrocode}
+\dim_set:Nn    \leftmargini { 2\ccwd }
+\dim_set_eq:NN \leftmargin  \leftmargini
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[int]{\partopsep, \@listi, \@listI}
+%    将列表内部的间距都缩减为普通段落间距 \cs{parskip}。前方留出 8bp 的间距，这样总的行间
+%    空白恰为正文情况（20bp${}-{}$12bp）的两倍。若前方分段，则间距再增加 3bp，相当于总共
+%    19bp 的空白。
+%    \begin{macrocode}
+\dim_set:Nn \partopsep { 3bp plus 2bp minus 2bp }
+\tl_set:cn { @listi }
+  {
+    \leftmargin\leftmargini
+    \parsep  \parskip
+    \topsep  8bp plus 3bp minus 4bp
+    \itemsep \parsep
+    \listparindent \parindent
+  }
+\tl_set_eq:cc { @listI } { @listi }
+\tl_use:c { @listi }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[int]{\@listii, \@listiii, \@listiv, \@listv, \@listvi}
+%    列表前的间距逐级减小。
+%    \begin{macrocode}
+\tl_set:cn { @listii }
+  {
+    \leftmargin\leftmarginii
+    \labelwidth\leftmarginii
+    \advance\labelwidth-\labelsep
+    \topsep  4bp plus 1.5bp minus 1bp
+    \parsep  \parskip
+    \itemsep \parsep
+    \listparindent \parindent
+  }
+\tl_set:cn { @listiii }
+  {
+    \leftmargin\leftmarginiii
+    \labelwidth\leftmarginiii
+    \advance\labelwidth-\labelsep
+    \topsep  2bp plus 1bp minus 1bp
+    \parsep  \parskip
+    \itemsep \parsep
+    \listparindent \parindent
+  }
+\tl_set:cn { @listiv }
+  {
+    \leftmargin\leftmarginiv
+    \labelwidth\leftmarginiv
+    \advance\labelwidth-\labelsep
+    \parsep  \parskip
+    \itemsep \parsep
+    \listparindent \parindent
+  }
+\tl_set:cn { @listv }
+  {
+    \leftmargin\leftmarginv
+    \labelwidth\leftmarginv
+    \advance\labelwidth-\labelsep
+    \parsep  \parskip
+    \itemsep \parsep
+    \listparindent \parindent
+  }
+\tl_set:cn { @listvi }
+  {
+    \leftmargin\leftmarginvi
+    \labelwidth\leftmarginvi
+    \advance\labelwidth-\labelsep
+    \parsep  \parskip
+    \itemsep \parsep
+    \listparindent \parindent
+  }
+%    \end{macrocode}
+% \end{macro}
+%
 % \subsection{本地化 Localization}
 %    大多数本地化通过 \pkg{babel} 自动完成。
 %
