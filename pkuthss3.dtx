@@ -1726,6 +1726,18 @@
 % \end{macro}
 %
 % \subsubsection{章节 Chapters and sections}
+% \begin{macro}{\frontmatter}
+%    前言部分使用大写罗马数字标号。
+%    \begin{macrocode}
+\RenewDocumentCommand \frontmatter { }
+  {
+    \cleardoublepage
+    \@mainmatterfalse
+    \pagenumbering{Roman}
+  }
+%    \end{macrocode}
+% \end{macro}
+%
 % \begin{macro}{\chapter}
 %    \TeX{} 中的竖直间距是相对于基线间距 \cs{baselineskip} 添加的，而格式要求是按照 Word
 %    语境定义，指相对于最紧间距外额外添加的间距，因此都需要重新计算。
