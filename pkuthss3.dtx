@@ -37,6 +37,22 @@
 \usepackage[UTF8,linespread=1.1,fontset=ubuntu]{ctex}
 \newcommand\pkuthss{PKU\-\textsc{thss}3}
 
+\ProvideDocElement
+  [printtype=\textit{template},idxtype=template,idxgroup=Templates]
+  {Template} {templatedecl}
+\ProvideDocElement
+  [
+    printtype=\textit{interface},
+    idxtype=template interface,idxgroup=Template interfaces
+  ]
+  {Template Interface} {templateinterfacedecl}
+\ProvideDocElement
+  [
+    printtype=\textit{instance},
+    idxtype=template instance,idxgroup=Template instances
+  ]
+  {Template Instance} {templateinstancedecl}
+
 \EnableCrossrefs
 \CodelineIndex
 \setlength\IndexMin{200pt}
@@ -105,9 +121,13 @@
 % \begin{macro}{}
 %    临时变量。
 %    \begin{macrocode}
-\tl_new:N  \l_@@_tmpa_tl
-\tl_new:N  \l_@@_tmpb_tl
-\tl_new:N  \l_@@_tmpc_tl
+\skip_new:N  \l_@@_tmpa_skip
+\skip_new:N  \l_@@_tmpb_skip
+\skip_new:N  \l_@@_tmpc_skip
+\tl_new:N    \l_@@_tmpa_tl
+\tl_new:N    \l_@@_tmpb_tl
+\tl_new:N    \l_@@_tmpc_tl
+\clist_new:N \l_@@_tmpa_clist
 \bool_new:N  \l_@@_tmpa_bool
 %    \end{macrocode}
 % \end{macro}
@@ -260,6 +280,15 @@
 %    \end{macrocode}
 % \end{macro}
 %
+% \begin{macro}{anonymous, \l_@@_anonymous_bool}
+%    是否匿名评阅（盲审）。
+%    \begin{macrocode}
+    anonymous .bool_set:N = \l_@@_anonymous_bool,
+    anonymous .default:n  = true,
+    anonymous .initial:n  = false,
+%    \end{macrocode}
+% \end{macro}
+%
 % \begin{macro}{word-grid, \l_@@_word_grid_bool, word-grid-size}
 %    是否启用类似 MS Word 文档网格的行为，以及若启用，以 bp 为单位给出网格间距的值。
 %    \begin{macrocode}
@@ -335,6 +364,7 @@
 %    \end{macrocode}
 %
 %    \begin{macrocode}
+\RequirePackage { tabularx, multirow }
 \RequirePackage { unicode-math }
 %    \end{macrocode}
 %
@@ -1090,6 +1120,525 @@
 % \end{macro}
 %
 % \subsection{文档部件 Document markup}
+% \subsubsection{元数据 Metadata}
+%
+% \paragraph{封面信息}
+%    \begin{macrocode}
+\@@_define_metadata:n
+  {
+%    \end{macrocode}
+% \begin{variable}{
+%   \l_@@_title_chinese_tl,
+%   \l_@@_name_chinese_tl,
+%   \l_@@_student_id_tl,
+%   \l_@@_school_tl,
+%   \l_@@_major_chinese_tl,
+%   \l_@@_direction_tl,
+%   \l_@@_mentor_chinese_clist,
+%   \l_@@_academic_degree_bool,
+%   \l_@@_date_tl
+% }
+%    学位论文封面用到的信息。
+%    \begin{macrocode}
+    ctitle              .tl_set:N    = \l_@@_title_chinese_tl,
+    cname               .tl_set:N    = \l_@@_name_chinese_tl,
+    studentid           .tl_set:N    = \l_@@_student_id_tl,
+    school              .tl_set:N    = \l_@@_school_tl,
+    cmajor              .tl_set:N    = \l_@@_major_chinese_tl,
+    direction           .tl_set:N    = \l_@@_direction_tl,
+    cmentor             .clist_set:N = \l_@@_mentor_chinese_clist,
+    academic-degree     .bool_set:N  = \l_@@_academic_degree_bool,
+    academic-degree     .default:n   = true,
+    professional-degree .bool_set_inverse:N  =
+      \l_@@_academic_degree_bool,
+    professional-degree .default:n   = true,
+    date                .tl_set:N    = \l_@@_date_tl,
+%    \end{macrocode}
+% \end{variable}
+%
+% \begin{variable}{
+%   \l_@@_title_english_tl,
+%   \l_@@_name_english_tl,
+%   \l_@@_major_english_tl,
+%   \l_@@_mentor_english_clist
+% }
+%    学位论文摘要用到的信息。关键词另行采用 \env{abstract} 的参数进行设置。
+%    \begin{macrocode}
+    etitle     .tl_set:N    = \l_@@_title_english_tl,
+    ename      .tl_set:N    = \l_@@_name_english_tl,
+    emajor     .tl_set:N    = \l_@@_major_english_tl,
+    ementor    .clist_set:N = \l_@@_mentor_english_clist,
+%    \end{macrocode}
+% \end{variable}
+%
+% \begin{variable}{\l_@@_discipline_chinese_tl, \l_@@_blind_id_str}
+%    盲审封面用到的信息。盲审论文编号有下划线，因此存为 str，用户无需做转义。
+%    \begin{macrocode}
+    cdiscipline .tl_set:N  = \l_@@_discipline_chinese_tl,
+    blindid     .str_set:N = \l_@@_blind_id_str,
+%    \end{macrocode}
+% \end{variable}
+%
+%    博后出站报告封面信息。
+%    \begin{macrocode}
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+  }
+%    \end{macrocode}
+%
+% \paragraph{封面（及页眉）信息的标签}
+% \begin{variable}{\l_@@_metadata_label_prop}
+%    根据简体与繁体定义不同的值。
+%    \begin{macrocode}
+\prop_new_linked:N \l_@@_metadata_label_prop
+\bool_if:NTF \l_@@_traditional_chinese_bool
+  {
+    \prop_put_from_keyval:Nn \l_@@_metadata_label_prop
+      {
+        title_chinese        = 題目,
+        student_id           = 學號,
+        major_chinese        = 專業,
+        mentor_chinese       = 導師姓名,
+        academic_degree      = 學術學位,
+        professional_degree  = 專業學位,
+        doctor               = 博士研究生學位論文,
+        doctor-header        = 北京大學博士學位論文,
+        master               = 碩士研究生學位論文,
+        master-header        = 北京大學碩士學位論文,
+        bachelor             = 本科生畢業論文,
+        bachelor-header      = 北京大學本科生畢業論文,
+        keywords_chinese     = 關鍵詞,
+        anonymous_label      = （匿名評閲論文封面）,
+        anonymous_discipline = 一級學科,
+        anonymous_major      = 二級學科,
+        blind_id             = 論文編號
+    }
+  }
+  {
+    \prop_put_from_keyval:Nn \l_@@_metadata_label_prop
+      {
+        title_chinese        = 题目,
+        student_id           = 学号,
+        major_chinese        = 专业,
+        mentor_chinese       = 导师姓名,
+        academic_degree      = 学术学位,
+        professional_degree  = 专业学位,
+        doctor               = 博士研究生学位论文,
+        doctor-header        = 北京大学博士学位论文,
+        master               = 硕士研究生学位论文,
+        master-header        = 北京大学硕士学位论文,
+        bachelor             = 本科生毕业论文,
+        bachelor-header      = 北京大学本科生毕业论文,
+        keywords_chinese     = 关键词,
+        anonymous_label      = （匿名评阅论文封面）,
+        anonymous_discipline = 一级学科,
+        anonymous_major      = 二级学科,
+        blind_id             = 论文编号
+      }
+  }
+%    \end{macrocode}
+%    简体繁体同形的、以及英文标签直接一同定义。
+%    \begin{macrocode}
+\prop_put_from_keyval:Nn \l_@@_metadata_label_prop
+  {
+    name_chinese      = 姓名,
+    school            = 院系,
+    direction         = 研究方向,
+    chinese_anonymous = 中文,
+    english_anonymous = 英文,
+    mentor_english    = Supervised~by,
+    keywords_english  = KEY~WORDS,
+  }
+%    \end{macrocode}
+% \end{variable}
+%
+% \subsubsection{封面模板 The title template}
+% \begin{templatedecl}{titlepage}
+%    模板声明。
+%    \begin{macrocode}
+\NewTemplateType { titlepage } { 0 }
+%    \end{macrocode}
+% \end{templatedecl}
+%
+% \paragraph{模板界面定义 Template interfaces}
+% \subparagraph{学位论文封面 Thesis}
+% \begin{templateinterfacedecl}{titlepage/thesis}
+%    选项主要是本科生与研究生论文封面不同的竖直间距参数。
+%    \begin{macrocode}
+\DeclareTemplateInterface { titlepage } { thesis } { 0 }
+  {
+    thesis-name        : tokenlist,
+    before-logo-skip   : skip      = 15.6bp,
+    after-title-skip   : skip      = 0pt plus 1fill,
+    after-meta-skip    : skip      = 39bp,
+    after-degree-skip  : skip      = 19.5bp,
+    after-date-skip    : skip      = 1.14803bp,
+    show-english-title : boolean   = false,
+    english-title-size : length    = 26bp,
+    show-direction     : boolean   = true,
+    show-degree-type   : boolean   = true
+  }
+%    \end{macrocode}
+% \end{templateinterfacedecl}
+%
+% \subparagraph{盲审封面 Anonymous}
+% \begin{templateinterfacedecl}{titlepage/anonymous}
+%    选项为封面上的论文类型标题。
+%    \begin{macrocode}
+\DeclareTemplateInterface { titlepage } { anonymous } { 0 }
+  {
+    thesis-name : tokenlist
+  }
+%    \end{macrocode}
+% \end{templateinterfacedecl}
+%
+% \paragraph{学位论文封面实现 Thesis titlepage implementation}
+% \begin{templateinterfacedecl}{titlepage/thesis}
+%    使用内核提供的局域临时变量应该是安全的。
+%    \begin{macrocode}
+\DeclareTemplateCode { titlepage } { thesis } { 0 }
+  {
+    thesis-name        = \l_tmpa_tl,
+    before-logo-skip   = \l_tmpa_skip,
+    after-title-skip   = \l_tmpb_skip,
+    after-meta-skip    = \l_@@_tmpa_skip,
+    after-degree-skip  = \l_@@_tmpb_skip,
+    after-date-skip    = \l_@@_tmpc_skip,
+    show-english-title = \l_tmpa_bool,
+    english-title-size = \l_tmpa_dim,
+    show-direction     = \l_tmpb_bool,
+    show-degree-type   = \l_@@_tmpa_bool,
+  }
+  {
+    \begin { titlepage }
+%    \end{macrocode}
+%    尽可能与模板封面一致的参数；将 \cs{lineskip} 设置为 0pt，避免 \LaTeX{} 自动添加间距。
+%    \begin{macrocode}
+      \selectlanguage { chinese }
+      \bool_set_eq:NN \l_@@_word_grid_bool \c_true_bool
+      \tl_set:Nn \arraystretch { 1 }
+      \dim_set:Nn \parindent { 0pt }
+      \dim_set:Nn \tabcolsep { 0.19cm }
+      \dim_set:Nn \lineskip { 0pt }
+      \dim_set:Nn \arrayrulewidth { 0.75bp }
+%    \end{macrocode}
+% \subparagraph{校徽、校名题字以及论文类型}
+%    复原了 Word 会在图片上下添加的 0.2cm 间距。
+%    \begin{macrocode}
+      \mode_leave_vertical:
+      \skip_vertical:n { \l_tmpa_skip - \topskip }
+      {
+        \centering
+        \skip_vertical:n { 0.2cm }
+        \@@_pku_logo:
+        \skip_vertical:n { 0.2cm }
+        {
+          \Huge \sffamily
+          \strut \l_tmpa_tl
+        }
+        \skip_vertical:n { 19.5bp }
+      }
+%    \end{macrocode}
+% \subparagraph{论文题目}
+%    表格左缩进参照 docx 格式的行为；doc 格式会少缩进 0.19cm，暂不实现。
+%    单元格中的内容设置为居中可换行，宽度为减去两侧 \cs{tabcolsep} 后的值。
+%    \begin{macrocode}
+      {
+        \huge
+        \skip_horizontal:n { 1.25cm }
+        \dim_set:Nn \l_tmpb_dim { \box_dp:N \strutbox }
+        \begin { tabular } [ b ]
+          {
+            > { \centering\arraybackslash \@@_timu_size: }
+            b { 2.37cm }
+            > { \centering\arraybackslash \sffamily\bfseries }
+            b { 9.78cm }
+          }
+%    \end{macrocode}
+%    “题目”二字靠单元格底端对齐，而非默认的与右侧文字按基线对齐。
+%    \begin{macrocode}
+          \mode_leave_vertical:
+          \box_move_up:nn { \box_dp:N \strutbox - \l_tmpb_dim }
+            {
+              \hbox_to_wd:nn { 3\ccwd }
+                {
+                  \prop_item:Nn \l_@@_metadata_label_prop
+                    { title_chinese }
+                  ：
+                }
+            }
+          &
+%    \end{macrocode}
+%    仅有中文题目时，使用 \cs{multirow} 自动处理换行。\cs{multirow} 内容为竖直居中，因此
+%    内部嵌套高度为两行的 \cs{parbox}。
+%    \begin{macrocode}
+          \bool_if:NTF \l_tmpa_bool
+            { \l_@@_title_chinese_tl }
+            {
+              \dim_set:Nn \l_tmpb_dim { 2 \baselineskip }
+              \dim_add:Nn \l_tmpb_dim { \arrayrulewidth }
+              \multirow { 2 } { * }
+                {
+                  \parbox [t] [ \l_tmpb_dim ] [t] { \linewidth }
+                    { \centering \l_@@_title_chinese_tl }
+                }
+            }
+          \\ \@@_meta_cline:
+%    \end{macrocode}
+%    需要英文题目时，提供用户自定义字号的配置。
+%    \begin{macrocode}
+          &
+          \bool_if:NT \l_tmpa_bool
+            {
+              \@@_setfontsize:Nnnn \l_tmpa_dim
+                { \dim_use:N \l_tmpa_dim } { } { 1 }
+              \l_@@_title_english_tl
+            }
+          \\ \@@_meta_cline:
+        \end { tabular }
+      }
+      \skip_vertical:N \l_tmpb_skip
+%    \end{macrocode}
+% \subparagraph{信息表}
+%    \begin{macrocode}
+      {
+        \LARGE
+        \skip_horizontal:n { 1.75cm }
+        \begin { tabular } [ t ]
+          {
+            > {\raggedleft\arraybackslash\sffamily\@@_meta_class_size:}
+            p {2.81cm}
+            > {\centering\arraybackslash \fangsong}
+            p {7.25cm}
+          }
+          \clist_map_inline:nn
+            { name_chinese , student_id , school , major_chinese }
+            {
+              \@@_meta_label:n
+                { \prop_item:Nn \l_@@_metadata_label_prop {##1} }
+              & \tl_use:c { l_@@_ ##1 _tl }
+              \\ \@@_meta_cline:
+            }
+          \bool_if:NT \l_tmpb_bool
+            {
+              \@@_meta_label:n
+                {
+                  \prop_item:Nn \l_@@_metadata_label_prop
+                    { direction }
+                }
+              & \l_@@_direction_tl
+              \\ \@@_meta_cline:
+            }
+          \@@_meta_label:n
+            {
+              \prop_item:Nn \l_@@_metadata_label_prop
+                { mentor_chinese }
+            } &
+          \clist_use:Nn \l_@@_mentor_chinese_clist
+            { \\ \@@_meta_cline: & }
+          \\ \@@_meta_cline:
+        \end { tabular }
+        \skip_vertical:N \l_@@_tmpa_skip
+        {
+          \centering
+          \bool_if:NT \l_@@_tmpa_bool
+            {
+              \strut { \fangsong \@@_typeset_degree_type: }
+              \skip_vertical:N \l_@@_tmpb_skip
+            }
+          \strut \l_@@_date_tl
+          \skip_vertical:N \l_@@_tmpc_skip
+        }
+      }
+    \end { titlepage }
+  }
+%    \end{macrocode}
+% \end{templateinterfacedecl}
+%
+% \paragraph{匿名评阅封面实现 Anonymous reviewing titlepage implementation }
+% \begin{templateinterfacedecl}{titlepage/anonymous}
+%    盲评封面比较简单，设置好标题较长时更美观的悬挂缩进即可。
+%    \begin{macrocode}
+\DeclareTemplateCode { titlepage } { anonymous } { 0 }
+  {
+    thesis-name = \l_tmpa_tl
+  }
+  {
+    \begin { titlepage }
+      \selectlanguage { chinese }
+      \raggedright\LARGE\fangsong
+      \bool_set_eq:NN \l_@@_word_grid_bool \c_true_bool
+      \dim_set:Nn \parindent { -5em }
+      \dim_set:Nn \leftskip  {  5em }
+      \mode_leave_vertical:
+      \tex_vfill:D
+      {
+        \centering
+        { \Huge\bfseries\sffamily \strut \l_tmpa_tl }
+        \tex_par:D
+        {
+          \strut \zihao{-2}\fangsong
+          \prop_item:Nn \l_@@_metadata_label_prop { anonymous_label }
+        }
+        \skip_vertical:n { 0pt plus 0.5fill }
+      }
+      \clist_map_inline:nn { chinese , english }
+        {
+          \prop_item:Nn \l_@@_metadata_label_prop { ##1 _anonymous }
+          \prop_item:Nn \l_@@_metadata_label_prop { title_chinese }
+          ：
+          \tl_use:c { l_@@_title_ ##1 _tl }
+          \tex_par:D
+        }
+      \skip_vertical:n { 31.2bp }
+      \clist_map_inline:nn { discipline , major }
+        {
+          \prop_item:Nn \l_@@_metadata_label_prop { anonymous_ ##1 }
+          ：
+          \tl_use:c { l_@@_ ##1 _chinese_tl }
+          \tex_par:D
+        }
+      \prop_item:Nn \l_@@_metadata_label_prop { blind_id }
+      ： \l_@@_blind_id_str
+      \tex_vfill:D
+      \centering
+      \@@_typeset_degree_type:
+      \skip_vertical:n { 0pt plus 0.5fill }
+      \l_@@_date_tl
+      \tex_vfill:D
+    \end { titlepage }
+  }
+%    \end{macrocode}
+% \end{templateinterfacedecl}
+%
+% \paragraph{辅助函数 Auxiliary functions }
+% \begin{macro}{\@@_fw_colon:}
+%    用于封面的全角冒号，避免 C\TeX{} 压缩右侧空间。
+%    \begin{macrocode}
+\cs_new:Nn \@@_fw_colon: { \hbox_to_wd:nn { 1\ccwd } { ： } }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_meta_stretch_box:nn}
+%    生成定宽盒子，拉伸或压缩汉字间距。
+%    \begin{macrocode}
+\cs_new:Nn \@@_meta_stretch_box:nn
+  {
+    \group_begin:
+      \sys_if_engine_luatex:TF
+        { \ltjsetparameter { kanjiskip = { 0pt plus 1fil minus 1fil } } }
+        { \cs_set:Npn \CJKglue { \tex_hss:D } }
+      \hbox_to_wd:nn {#1} {#2}
+    \group_end:
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_meta_label:n}
+%    用于学位论文封面元数据表格的标签，拉伸至 4 个汉字宽度，并添加冒号。
+%    \begin{macrocode}
+\cs_new:Nn \@@_meta_label:n
+  {
+    \mode_leave_vertical:
+    \@@_meta_stretch_box:nn { 4\ccwd } {#1}
+    \@@_fw_colon:
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_meta_cline:}
+%    用于封面元数据表格中的划线，占用高度。
+%    \begin{macrocode}
+\cs_new:Nn \@@_meta_cline:
+  { \cline { 2-2 } \tex_noalign:D { \tex_unskip:D } }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_pku_logo:}
+%    TODO
+%    \begin{macrocode}
+\cs_new:Nn \@@_pku_logo: { \rule { 8.41cm } { 2.36cm } }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_typeset_degree_type:}
+%    根据用户选项确定学位类型前的框是否打勾。
+%    \begin{macrocode}
+\cs_new:Nn \@@_typeset_degree_type:
+  {
+    \group_begin:
+      \bool_if:NTF \l_@@_academic_degree_bool
+        { \@@_check_box: } { \@@_empty_box: }
+      \skip_horizontal:n { 0.5\ccwd }
+      \prop_item:Nn \l_@@_metadata_label_prop { academic_degree }
+      \skip_horizontal:n { 2\ccwd }
+      \bool_if:NTF \l_@@_academic_degree_bool
+        { \@@_empty_box: } { \@@_check_box: }
+      \skip_horizontal:n { 0.5\ccwd }
+      \prop_item:Nn \l_@@_metadata_label_prop { professional_degree }
+    \group_end:
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_symbol_font:}
+%    为勾选框提供字体；选取了各平台上的几款字体备用。如果这些字体不存在，则什么都不做。
+%    \begin{macrocode}
+\clist_map_inline:nn { Segoe~UI~Symbol, Apple~Symbols, Noto~Sans~Symbols~2 }
+  {
+    \fontspec_font_if_exist:nT {#1}
+      {
+        \newfontface \@@_symbol_font: {#1}
+        \clist_map_break:
+      }
+  }
+\cs_if_free:NT \@@_symbol_font:
+  { \cs_new_eq:NN \@@_symbol_font: \prg_do_nothing: }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_empty_box_char:,\@@_check_box_char:}
+%    使用 Unicode 字符实现勾选框；若字体不支持，则使用字符叠加生成。
+%    \begin{macrocode}
+\DeclareUnicodeCommand { \@@_empty_box_char: }
+  {
+    \tex_iffontchar:D \tex_font:D "2610
+      \tex_char:D "2610
+    \else:
+      \ensuremath { \mdlgwhtsquare }
+    \fi:
+  }
+\DeclareUnicodeCommand { \@@_check_box_char: }
+  {
+    \tex_iffontchar:D \tex_font:D "2611
+      \tex_char:D "2611
+    \else:
+      \mode_leave_vertical:
+      {
+        \ooalign
+          {
+            \tex_hss:D \ensuremath { \checkmark } \tex_hss:D
+            \tex_crcr:D
+            \ensuremath { \mdlgwhtsquare }
+          }
+      }
+    \fi:
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_empty_box:,\@@_check_box:}
+%    实际用来生成勾选框的包装函数；设置了对应字体。
+%    \begin{macrocode}
+\cs_new:Nn \@@_empty_box:
+  { { \@@_symbol_font: \@@_empty_box_char: } }
+\cs_new:Nn \@@_check_box:
+  { { \@@_symbol_font: \@@_check_box_char: } }
+%    \end{macrocode}
+% \end{macro}
+%
+%
 % \subsubsection{章节 Chapters and sections}
 % \begin{macro}{\chapter}
 %    \TeX{} 中的竖直间距是相对于基线间距 \cs{baselineskip} 添加的，而格式要求是按照 Word
