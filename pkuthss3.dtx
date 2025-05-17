@@ -365,6 +365,7 @@
 %
 %    \begin{macrocode}
 \RequirePackage { tabularx, multirow }
+\RequirePackage { etoolbox }
 \RequirePackage { unicode-math }
 %    \end{macrocode}
 %
@@ -1830,6 +1831,13 @@
   }
 %    \end{macrocode}
 %
+% \begin{macro}[int]{\@schapter}
+%    使无编号章生成页眉。
+%    \begin{macrocode}
+\apptocmd { \@schapter } { \chaptermark {#1} } { } { }
+%    \end{macrocode}
+% \end{macro}
+%
 % \subsubsection{列表 Lists}
 % \paragraph{一般列表参数 General list parameters}
 %    列表格式并没有任何规定。本文档类做一些简单设置。
@@ -1916,6 +1924,75 @@
   }
 %    \end{macrocode}
 % \end{macro}
+%
+% \subsubsection{摘要 Abstracts}
+% \begin{environment}{abstract}
+%    通用摘要，摘要名称大写。五个参数依次为语言、摘要章节名、关键词标签、关键词分隔符、关键词
+%    列表。前两个参数仅在定义 \env{cabstract} 与 \env{eabstract} 时使用，用户无需使用。
+%    \begin{macrocode}
+\NewDocumentEnvironment { abstract } { o o m O{,~} m }
+  {
+    \tl_if_novalue:nF {#1} { \selectlanguage {#1} }
+    \tl_if_novalue:nTF {#2}
+      { \chapter* { \text_uppercase:n \abstractname } }
+      {
+        \chapter* {#2}
+        \chaptermark { \text_uppercase:n \abstractname }
+      }
+  }
+  {
+    \tex_vfill:D
+    #3
+    \clist_use:nn {#5} {#4}
+  }
+%    \end{macrocode}
+% \end{environment}
+%
+% \begin{environment}{cabstract}
+%    唯一的参数是关键词列表。
+%    \begin{macrocode}
+\NewDocumentEnvironment { cabstract } { m }
+  {
+    \begin{abstract} [ chinese ] { 关键词： } [ ， ] {#1}
+  }
+  {
+    \end{abstract}
+  }
+%    \end{macrocode}
+% \end{environment}
+%
+% \begin{environment}{eabstract}
+%    英文摘要在非匿名评阅时需要排版英文的题名以及作者信息。
+%    \begin{macrocode}
+\NewDocumentEnvironment { eabstract } { m }
+  {
+    \bool_if:NTF \l_@@_anonymous_bool
+      {
+        \abstract [ \l_@@_english_variant_tl ]
+          { KEY~WORDS:~ } [ ,~ ] {#1}
+      }
+      {
+        \abstract [ \l_@@_english_variant_tl ]
+          [ \l_@@_title_english_tl ] { KEY~WORDS:~ } [ ,~ ] {#1}
+        {
+          \centering
+          \tl_use:N \l_@@_name_english_tl \c_space_tl
+          ( \l_@@_major_english_tl )
+          \tex_par:D
+          Supervised~by~
+          \clist_use:Nnnn \l_@@_mentor_english_clist
+            { ~and~ } { ,~ } { ,~and~ }
+          \skip_vertical:n { 8bp }
+          { \sffamily \bfseries \text_uppercase:n { \abstractname } }
+          \skip_vertical:n { 6bp }
+        }
+      }
+  }
+  {
+    \endabstract
+  }
+%    \end{macrocode}
+% \end{environment}
 %
 % \subsection{本地化 Localization}
 %    大多数本地化通过 \pkg{babel} 自动完成。
