@@ -365,6 +365,7 @@
 %
 %    \begin{macrocode}
 \RequirePackage { tabularx, multirow }
+\RequirePackage { caption }
 \RequirePackage { etoolbox }
 \RequirePackage { unicode-math }
 %    \end{macrocode}
@@ -931,6 +932,7 @@
 %    C\TeX{} 已经进行首行缩进 2 汉字字符的设置。其他设置保留为 \LaTeX{} 标准定义。
 %
 % \subsubsection{页面设置 Page layout}
+% \label{sssec:page_layout}
 % \paragraph{垂直间距 Vertical spacing}
 % \begin{macro}[int]{\headheight}
 %    页眉从基线算起的高度；总是假设为中易宋体五号字（10.5bp）的基线位置。
@@ -1993,6 +1995,20 @@
   }
 %    \end{macrocode}
 % \end{environment}
+%
+% \subsubsection{浮动体 Floats}
+%    仅定义格式要求的图名/表名样式。在 \S\ref{sssec:page_layout} 已经使浮动体与周围文字
+%    间距为 12bp，这里只需设置 caption 与图/表间距为 6bp。
+%    \begin{macrocode}
+\captionsetup
+  {
+    labelsep       = quad,
+    font           = small,
+    skip           = 6bp,
+    figureposition = bottom,
+    tableposition  = top
+  }
+%    \end{macrocode}
 %
 % \subsection{本地化 Localization}
 %    大多数本地化通过 \pkg{babel} 自动完成。
