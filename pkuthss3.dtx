@@ -52,6 +52,7 @@
     idxtype=template instance,idxgroup=Template instances
   ]
   {Template Instance} {templateinstancedecl}
+\DeclareRobustCommand \opt {\texttt}
 
 \EnableCrossrefs
 \CodelineIndex
@@ -186,7 +187,7 @@
 % \begin{macro}{fontset, use-noto}
 %    如果用户希望使用 C\TeX{} 的字体配置或自行配置字体，则需指定本选项的值。
 %
-%    如果用户希望宋、黑体使用思源（Noto）系列，则需指定 \verb|use-noto| 选项。
+%    如果用户希望宋、黑体使用思源（Noto）系列，则需指定 \opt{use-noto} 选项。
 %    \begin{macrocode}
     fontset .code:n =
       {
@@ -249,7 +250,7 @@
 % \end{macro}
 %
 % \begin{macro}{chapter-localization, \l_@@_chapter_localization_bool}
-%    控制是否将章节序号（“第一章”等）按照 \verb|language| 进行本地化。
+%    控制是否将章节序号（“第一章”等）按照 \opt{language} 进行本地化。
 %    \begin{macrocode}
     chapter-localization .bool_set:N = \l_@@_chapter_localization_bool,
     chapter-localization .initial:n  = true,
@@ -429,7 +430,7 @@
     Use~Fandol~instead.
   }
 %    \end{macrocode}
-%    如果用户没有指定 \verb|fontset| 选项，则进行自动配置。C\TeX{} 内部会将字体设置的参数
+%    如果用户没有指定 \opt{fontset} 选项，则进行自动配置。C\TeX{} 内部会将字体设置的参数
 %    完全展开，因此不用做相关处理。
 %    \begin{macrocode}
 \bool_if:NF \l_@@_fontset_use_ctex_bool
@@ -459,7 +460,7 @@
 %    \end{macrocode}
 % \subparagraph{宋体}
 %    先默认设置成 Fandol，后按照 Windows、Mac、Noto 的优先级顺序覆盖；如果用户选择了
-%    \verb|use-noto|，则 Noto 优先级最高。
+%    \opt{use-noto}，则 Noto 优先级最高。
 %
 %    Fandol 自带粗宋体。
 %    \begin{macrocode}
@@ -1030,7 +1031,7 @@
 % \end{macro}
 %
 % \begin{macro}[int]{\footins}
-%    \verb|\skip\footins| 设置为 11bp 的 Times New Roman 的无网格单倍行距，并可无限伸
+%    \cmd{\skip\footins} 设置为 11bp 的 Times New Roman 的无网格单倍行距，并可无限伸
 %    长。
 %    \begin{macrocode}
 \dim_set:Nn \l_tmpa_dim  { 11bp }
