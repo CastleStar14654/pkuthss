@@ -1,0 +1,87 @@
+% \iffalse meta-comment
+%
+% File: pkuthss3.dtx Copyright (C) 2025 Xuchen Lin
+%
+% This file is part of `pkuthss3', a LaTeX3-restructured version of
+% `pkuthss' by Casper Ti. Vector et al.
+% -------------------------------------------
+%
+% It may be distributed and/or modified under the
+% conditions of the LaTeX Project Public License, either version 1.3c
+% of this license or (at your option) any later version.
+% The latest version of this license is in
+%    https://www.latex-project.org/lppl.txt
+% and version 1.3c or later is part of all distributions of LaTeX
+% version 2008 or later.
+%
+% This file has the LPPL maintenance status "author-maintained".
+%
+% The files belonging to `pkuthss3' are pkuthss3.ins and pkuthss3.dtx,
+% and the derived files pkuthss3.cls and pkuthss3.pdf.
+%
+%
+% \fi
+%
+% \iffalse
+%<cls>\NeedsTeXFormat{LaTeX2e}
+%<*driver>
+\ProvidesFile{pkuthss3.dtx}[%
+%</driver>
+%<cls>\ProvidesExplClass {pkuthss3}
+  {2025/04/18} {0.0}
+%<cls>  {Peking University dissertation document class}
+%<*driver>
+]
+\documentclass{l3doc}
+
+\usepackage[UTF8,linespread=1.1]{ctex}
+\newcommand\pkuthss{PKU\-\textsc{thss}3}
+
+\EnableCrossrefs
+\CodelineIndex
+\setlength\IndexMin{200pt}
+
+\GetFileInfo{\jobname.dtx}
+\begin{document}
+  \DocInput{\jobname.dtx}
+\end{document}
+%</driver>
+% \fi
+%
+% \title{\pkuthss}
+% \author{
+%   Xuchen Lin
+% }
+% \date{Version \fileversion, Released \filedate}
+%
+% \maketitle
+%
+% \tableofcontents
+%
+% \begin{documentation}
+%
+% \end{documentation}
+%
+% \begin{implementation}
+% \clearpage
+% \section{代码实现 Implementation}
+%
+%    开始文档类内容。定义内部宏前缀为 \cls{pkuthss}。
+%    \begin{macrocode}
+%<*cls>
+%<@@=pkuthss>
+%    \end{macrocode}
+%
+%    定义 \cls{pkuthss} 的信息类别为文档类。
+%    \begin{macrocode}
+\prop_gput:Nnn \g_msg_module_type_prop { pkuthss } { Class }
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+%</cls>
+%    \end{macrocode}
+%
+% \end{implementation}
+%
+% \PrintIndex
+% \PrintChanges
