@@ -184,10 +184,19 @@
 %    \end{macrocode}
 %
 % \subsubsection{文档类加载时选项 Class loading-time options}
-% \begin{macro}{fontset, use-noto}
+% \begin{macro}{fontset, fontset-use-noto, fontset-use-gyre, fontset-required}
 %    如果用户希望使用 C\TeX{} 的字体配置或自行配置字体，则需指定本选项的值。
 %
-%    如果用户希望宋、黑体使用思源（Noto）系列，则需指定 \opt{use-noto} 选项。
+%    如果用户希望宋、黑体使用思源（Noto）系列，则需指定 \opt{fontset-use-noto} 选项。
+%
+%    如果用户希望西文字体使用 TeX Gyre 系列，则需指定 \opt{fontset-use-gyre} 选项。由于
+%    TeX Gyre Heros 基于 Helvetica，与 Arial 存在较为显著的区别，还提供了
+%    \opt{fontset-use-arial} 选项，无衬线体使用 Arial，衬线和等宽字体使用 TeX Gyre
+%    系列。
+%
+%    默认情况下，根据平台自动配置字体。如果用户希望严格使用中易系列中文字体以及 Times New
+%    Roman 和 Arial，则需指定 \opt{fontset-required} 选项。\opt{fontset-required}
+%    优先级低于 \opt{fontset-use-noto} 与 \opt{fontset-use-gyre}。
 %    \begin{macrocode}
     fontset .code:n =
       {
@@ -196,10 +205,22 @@
       },
     fontset .value_required:n = true,
     fontset .usage:n          = load,
-    use-noto .bool_set:N = \l_@@_fontset_use_noto_bool,
-    use-noto .initial:n  = false,
-    use-noto .default:n  = true,
-    use-noto .usage:n    = load,
+    fontset-use-noto .bool_set:N = \l_@@_fontset_use_noto_bool,
+    fontset-use-noto .initial:n  = false,
+    fontset-use-noto .default:n  = true,
+    fontset-use-noto .usage:n    = load,
+    fontset-use-gyre .bool_set:N = \l_@@_fontset_use_gyre_bool,
+    fontset-use-gyre .initial:n  = false,
+    fontset-use-gyre .default:n  = true,
+    fontset-use-gyre .usage:n    = load,
+    fontset-use-arial .bool_set:N = \l_@@_fontset_use_arial_bool,
+    fontset-use-arial .initial:n  = false,
+    fontset-use-arial .default:n  = true,
+    fontset-use-arial .usage:n    = load,
+    fontset-required .bool_set:N = \l_@@_fontset_required_bool,
+    fontset-required .initial:n  = false,
+    fontset-required .default:n  = true,
+    fontset-required .usage:n    = load,
 %    \end{macrocode}
 % \end{macro}
 %
@@ -426,10 +447,34 @@
 %    \begin{macrocode}
 \msg_new:nnn { pkuthss } { noto-not-found }
   {
-    You~set~`use-noto'~option,~but~Noto~CJK~font~is~not~found.\\
+    You~set~`fontset-use-noto'~option,~but~Noto~CJK~font~is~not~found.\\
     Use~Fandol~instead.
   }
 %    \end{macrocode}
+% \begin{macro}{\@@_fontset_case:nnn, \@@_fontset_song_hei_case:nnn}
+%    三个参数分别对应 Windows（或 \opt{fontset-required}）、macOS、其他。仿宋/楷体完全根
+%    据平台以及 \opt{fontset-required} 的值确定；宋体/黑体参照 \opt{fontset-use-noto}
+%    的值。
+%    \begin{macrocode}
+\bool_lazy_or:nnTF
+  { \sys_if_platform_windows_p: } { \l_@@_fontset_required_bool }
+  {
+    \cs_set_eq:NN \@@_fontset_case:nnn \use_i:nnn
+  }
+  {
+    \ctex_if_platform_macos:TF
+      { \cs_set_eq:NN \@@_fontset_case:nnn \use_ii:nnn }
+      { \cs_set_eq:NN \@@_fontset_case:nnn \use_iii:nnn }
+  }
+\bool_if:NTF \l_@@_fontset_use_noto_bool
+  { \cs_set_eq:NN \@@_fontset_song_hei_case:nnn \use_iii:nnn }
+  {
+    \cs_set_eq:NN \@@_fontset_song_hei_case:nnn
+      \@@_fontset_case:nnn
+  }
+%    \end{macrocode}
+% \end{macro}
+%
 %    如果用户没有指定 \opt{fontset} 选项，则进行自动配置。C\TeX{} 内部会将字体设置的参数
 %    完全展开，因此不用做相关处理。
 %    \begin{macrocode}
@@ -437,18 +482,14 @@
   {
 %    \end{macrocode}
 % \paragraph{衬线字体}
-%    直立体选用宋体，斜体选用仿宋。
+%    直立体选用宋体，斜体选用仿宋。仿宋也设置为等宽字体。
 %
 % \subparagraph{仿宋}
-%    按照 Windows、Mac、Fandol 的顺序设置。仿宋也设置为等宽字体
 %    \begin{macrocode}
-    \fontspec_font_if_exist:nTF { FangSong }
+    \@@_fontset_case:nnn
       { \tl_set:Nn \l_@@_tmpa_tl { FangSong } }
-      {
-        \fontspec_font_if_exist:nTF { STFangsong }
-          { \tl_set:Nn \l_@@_tmpa_tl { STFangSong } }
-          { \tl_set:Nn \l_@@_tmpa_tl { FandolFang-Regular.otf } }
-      }
+      { \tl_set:Nn \l_@@_tmpa_tl { STFangsong } }
+      { \tl_set:Nn \l_@@_tmpa_tl { FandolFang-Regular.otf } }
     \setCJKfamilyfont { zhfs } { \l_@@_tmpa_tl } [ AutoFakeBold = 2 ]
     \setCJKmonofont   { \l_@@_tmpa_tl } [ AutoFakeBold = 2 ]
     \tl_set:Ne \l_@@_tmpa_tl
@@ -459,49 +500,63 @@
       }
 %    \end{macrocode}
 % \subparagraph{宋体}
-%    先默认设置成 Fandol，后按照 Windows、Mac、Noto 的优先级顺序覆盖；如果用户选择了
-%    \opt{use-noto}，则 Noto 优先级最高。
+%    先默认设置成 Fandol，后按照 Windows/\opt{fontset-required}、Mac、Noto 的优先级顺
+%    序覆盖；如果用户选择了 \opt{fontset-use-noto}，则 Noto 优先级最高。
 %
 %    Fandol 自带粗宋体。
 %    \begin{macrocode}
-    \tl_set:Nn  \l_@@_tmpb_tl { FandolSong-Regular.otf }
-    \tl_clear:N \l_@@_tmpc_tl
-%    \end{macrocode}
-%    临时变量 \cs{l_@@_tmpa_bool} 保存 Noto CJK 系列字体是否存在。
-%    \begin{macrocode}
-    \bool_set_eq:NN \l_@@_tmpa_bool \c_true_bool
-    \fontspec_font_if_exist:nF { Noto~Serif~CJK~SC }
+    \@@_fontset_song_hei_case:nnn
       {
-        \bool_if:NT \l_@@_fontset_use_noto_bool
-          {
+        \tl_set:Nn \l_@@_tmpb_tl { SimSun }
+        \tl_set:Nn \l_@@_tmpc_tl { AutoFakeBold = 2 }
+      }
+      {
+        \tl_set:Nn  \l_@@_tmpb_tl { Songti~SC }
+        \tl_clear:N \l_@@_tmpc_tl
+      }
+      {
+        \tl_set:Nn \l_@@_tmpb_tl { FandolSong-Regular.otf }
+        \tl_set:Nn \l_@@_tmpc_tl { BoldFont = FandolSong-Bold.otf }
 %    \end{macrocode}
+%    较新版本的 Windows 自带了 Noto 区域变体。其他情况，需要检查完整 CJK 字体是否存在，使
+%    用 \cs{l_@@_tmpa_bool} 表示。
+%    \begin{macrocode}
+        \bool_set_false:N \l_@@_tmpa_bool
+        \sys_if_platform_windows:TF
+          {
+            \fontspec_font_if_exist:nTF { Noto~Serif~SC~Light }
+              {
+                \tl_set:Nn \l_@@_tmpb_tl { Noto~Serif~SC~Light }
+                \tl_set:Nn \l_@@_tmpc_tl
+                  { BoldFont = Noto~Serif~SC~SemiBold }
+              }
+              { \bool_set_true:N \l_@@_tmpa_bool }
+          }
+          { \bool_set_true:N \l_@@_tmpa_bool }
+        \bool_if:NT \l_@@_tmpa_bool
+          {
+            \fontspec_font_if_exist:nF { Noto~Serif~CJK~SC~Light }
+              {
+                \bool_if:NT \l_@@_fontset_use_noto_bool
+                  {
+%    \end{macrocode}
+%    使用临时变量 \cs{l_@@_tmpa_bool} 保存 Noto CJK 系列字体是否存在。
+%
 %    有可能用户使用的是非 Linux 系统下的 MiK\TeX{}，通过给出字体文件名促使自动安装
 %    \pkg{notocjksc} 宏包。
 %    \begin{macrocode}
-            \fontspec_font_if_exist:nF { NotoSerifCJKsc-Regular.otf }
-              {
-                msg_warning:nn { pkuthss } { noto-not-found }
-                \bool_set_eq:NN \l_@@_tmpa_bool \c_false_bool
+                    \fontspec_font_if_exist:nF { NotoSerifCJKsc-Light.otf }
+                      {
+                        msg_warning:nn { pkuthss } { noto-not-found }
+                        \bool_set_eq:NN \l_@@_tmpa_bool \c_false_bool
+                      }
+                  }
               }
-          }
-      }
-    \bool_if:NT \l_@@_tmpa_bool
-      {
-        \tl_set:Nn \l_@@_tmpb_tl { Noto~Serif~CJK~SC~Light }
-        \tl_set:Nn \l_@@_tmpc_tl { BoldFont = Noto~Serif~CJK~SC~SemiBold }
-      }
-    \bool_if:NF \l_@@_fontset_use_noto_bool
-      {
-        \fontspec_font_if_exist:nTF { SimSun }
-          {
-            \tl_set:Nn \l_@@_tmpb_tl { SimSun }
-            \tl_set:Nn \l_@@_tmpc_tl { AutoFakeBold = 2 }
-          }
-          {
-            \fontspec_font_if_exist:nT { Songti~SC }
+            \bool_if:NT \l_@@_tmpa_bool
               {
-                \tl_set:Nn  \l_@@_tmpb_tl { Songti~SC }
-                \tl_clear:N \l_@@_tmpc_tl
+                \tl_set:Nn \l_@@_tmpb_tl { Noto~Serif~CJK~SC~Light }
+                \tl_set:Nn \l_@@_tmpc_tl
+                  { BoldFont = Noto~Serif~CJK~SC~SemiBold }
               }
           }
       }
@@ -520,19 +575,16 @@
 %    Mac 下的系统楷体有自带粗体字形，不需要设置伪粗体。
 %    \begin{macrocode}
     \tl_set:Nn \l_@@_tmpb_tl { AutoFakeBold = 2 }
-    \fontspec_font_if_exist:nTF { KaiTi }
+    \@@_fontset_case:nnn
       { \tl_set:Nn \l_@@_tmpa_tl { KaiTi } }
       {
-        \fontspec_font_if_exist:nTF { Kaiti~SC }
-          {
-            \tl_set:Nn \l_@@_tmpa_tl { Kaiti~SC }
-            \tl_clear:N \l_@@_tmpb_tl
-          }
-          {
-            \fontspec_font_if_exist:nTF { AR~PL~UKai~CN }
-              { \tl_set:Nn \l_@@_tmpa_tl { AR~PL~UKai~CN } }
-              { \tl_set:Nn \l_@@_tmpa_tl { gkai00mp.ttf } }
-          }
+        \tl_set:Nn \l_@@_tmpa_tl { Kaiti~SC }
+        \tl_clear:N \l_@@_tmpb_tl
+      }
+      {
+        \fontspec_font_if_exist:nTF { AR~PL~UKai~CN }
+          { \tl_set:Nn \l_@@_tmpa_tl { AR~PL~UKai~CN } }
+          { \tl_set:Nn \l_@@_tmpa_tl { gkai00mp.ttf } }
       }
     \setCJKfamilyfont { zhkai }
       { \l_@@_tmpa_tl } [ \l_@@_tmpb_tl ]
@@ -548,29 +600,50 @@
       }
 %    \end{macrocode}
 % \subparagraph{黑体}
-%    类似宋体，先默认设置成 Fandol，后按照 Windows、Mac、Noto 的优先级顺序覆盖。
-%
-%    Fandol 自带粗黑体。
+%    类似宋体。Fandol 自带粗黑体。
 %    \begin{macrocode}
-    \tl_set:Nn  \l_@@_tmpb_tl { FandolHei-Regular.otf }
-    \tl_clear:N \l_@@_tmpc_tl
-    \bool_if:NT \l_@@_tmpa_bool
+    \@@_fontset_song_hei_case:nnn
       {
-        \tl_set:Nn \l_@@_tmpb_tl { Noto~Sans~CJK~SC~DemiLight }
-        \tl_set:Nn \l_@@_tmpc_tl { BoldFont = Noto~Sans~CJK~SC~Medium }
+        \tl_set:Nn \l_@@_tmpb_tl { SimHei }
+        \tl_set:Nn \l_@@_tmpc_tl { AutoFakeBold = 2 }
       }
-    \bool_if:NF \l_@@_fontset_use_noto_bool
       {
-        \fontspec_font_if_exist:nTF { SimHei }
+        \tl_set:Nn \l_@@_tmpb_tl { Heiti~SC~Light }
+        \tl_set:Nn \l_@@_tmpc_tl { BoldFont = Heiti~SC~Medium }
+      }
+      {
+        \tl_set:Nn \l_@@_tmpb_tl { FandolHei-Regular.otf }
+        \tl_set:Nn \l_@@_tmpc_tl { BoldFont = FandolHei-Bold.otf }
+        \bool_set_false:N \l_@@_tmpa_bool
+        \sys_if_platform_windows:TF
           {
-            \tl_set:Nn \l_@@_tmpb_tl { SimHei }
-            \tl_set:Nn \l_@@_tmpc_tl { AutoFakeBold = 2 }
-          }
-          {
-            \fontspec_font_if_exist:nT { Heiti~SC~Light }
+            \fontspec_font_if_exist:nTF { Noto~Sans~SC~DemiLight }
               {
-                \tl_set:Nn \l_@@_tmpb_tl { Heiti~SC~Light }
-                \tl_set:Nn \l_@@_tmpc_tl { BoldFont = Heiti~SC~Medium }
+                \tl_set:Nn \l_@@_tmpb_tl { Noto~Sans~SC~DemiLight }
+                \tl_set:Nn \l_@@_tmpc_tl
+                  { BoldFont = Noto~Sans~SC~Medium }
+              }
+              { \bool_set_true:N \l_@@_tmpa_bool }
+          }
+          { \bool_set_true:N \l_@@_tmpa_bool }
+        \bool_if:NT \l_@@_tmpa_bool
+          {
+            \fontspec_font_if_exist:nF { Noto~Sans~CJK~SC~DemiLight }
+              {
+                \bool_if:NT \l_@@_fontset_use_noto_bool
+                  {
+                    \fontspec_font_if_exist:nF { NotoSansCJKsc-DemiLight.otf }
+                      {
+                        msg_warning:nn { pkuthss } { noto-not-found }
+                        \bool_set_eq:NN \l_@@_tmpa_bool \c_false_bool
+                      }
+                  }
+              }
+            \bool_if:NT \l_@@_tmpa_bool
+              {
+                \tl_set:Nn \l_@@_tmpb_tl { Noto~Sans~CJK~SC~DemiLight }
+                \tl_set:Nn \l_@@_tmpc_tl
+                  { BoldFont = Noto~Sans~CJK~SC~Medium }
               }
           }
       }
@@ -589,13 +662,25 @@
 %    \end{macrocode}
 %
 % \paragraph{西文字体}
-%    存在商用字体则使用，否则使用发行版自带的开源版本。
-%
-%    发行版字体使用文件名指定，以便于 MiK\TeX{} on-the-fly 安装。Times New Roman 需要
-%    手动打开连字。
+%    在 Windows 与 macOS 上使用 Times New Roman、Arial 以及 Courier New；在 Linux
+%    上使用 TeX Gyre 系列。TeX Gyre 系列字体使用文件名指定，以便于 MiK\TeX{} on-the-fly
+%    安装。Times New Roman 需要手动打开连字。
 %    \begin{macrocode}
-\fontspec_font_if_exist:nTF { Times~New~Roman }
-  { \setmainfont { Times~New~Roman } [ Ligatures = Rare ] }
+\bool_lazy_and:nnTF
+  { \bool_not_p:n { \l_@@_fontset_use_gyre_bool } }
+  {
+    \bool_lazy_any_p:n
+      {
+        { \l_@@_fontset_required_bool }
+        { \sys_if_platform_windows_p: }
+        { \file_if_exist_p:n { /System/Library/Fonts/Menlo.ttc } }
+      }
+  }
+  {
+    \setmainfont { Times~New~Roman } [ Ligatures = Rare ]
+    \setsansfont { Arial }
+    \setmonofont { Courier~New }
+  }
   {
     \setmainfont { texgyretermes }
       [
@@ -605,13 +690,11 @@
         ItalicFont     = *-italic,
         BoldItalicFont = *-bolditalic
       ]
+    \bool_if:NTF \l_@@_fontset_use_arial_bool
+      { \setsansfont { Arial } }
+      { \setsansfont { TeX~Gyre~Heros } }
+    \setmonofont { TeX~Gyre~Cursor }
   }
-\fontspec_font_if_exist:nTF { Arial }
-  { \setsansfont { Arial } }
-  { \setsansfont { TeX~Gyre~Heros } }
-\fontspec_font_if_exist:nTF { Courier~New }
-  { \setmonofont { Courier~New } }
-  { \setmonofont { TeX~Gyre~Cursor } }
 %    \end{macrocode}
 %
 % \paragraph{数学字体}
@@ -1589,12 +1672,13 @@
 % \begin{macro}{\@@_symbol_font:}
 %    为勾选框提供字体；选取了各平台上的几款字体备用。如果这些字体不存在，则什么都不做。
 %    \begin{macrocode}
-\clist_map_inline:nn { Segoe~UI~Symbol, Apple~Symbols, Noto~Sans~Symbols~2 }
+\@@_fontset_case:nnn
+  { \newfontface \@@_symbol_font: { Segoe~UI~Symbol } }
+  { \newfontface \@@_symbol_font: { Apple~Symbols } }
   {
-    \fontspec_font_if_exist:nT {#1}
+    \fontspec_font_if_exist:nT { DejaVu~Sans }
       {
-        \newfontface \@@_symbol_font: {#1}
-        \clist_map_break:
+        \newfontface \@@_symbol_font: { DejaVu~Sans }
       }
   }
 \cs_if_free:NT \@@_symbol_font:
