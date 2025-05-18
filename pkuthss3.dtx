@@ -279,6 +279,15 @@
 %    \end{macrocode}
 % \end{macro}
 %
+% \begin{macro}{footmisc}
+%    \begin{macrocode}
+    footmisc .clist_set:N      = \l_@@_footmisc_option_clist,
+    footmisc .initial:n        = { perpage, bottom, belowfloats },
+    footmisc .value_required:n = true,
+    footmisc .usage:n          = load,
+%    \end{macrocode}
+% \end{macro}
+%
 % \begin{macro}{space-below-footer, \l_@@_space_below_footer_bool}
 %    是否模拟 MS Word 默认在页脚文字段后添加 8bp 间距的行为。
 %    \begin{macrocode}
@@ -388,7 +397,9 @@
 %    \begin{macrocode}
 \RequirePackage { tabularx, multirow }
 \RequirePackage { caption }
+\RequirePackage [ \l_@@_footmisc_option_clist ] { footmisc }
 \RequirePackage { etoolbox }
+\RequirePackage { tikz }
 \RequirePackage { unicode-math }
 %    \end{macrocode}
 %
@@ -1114,12 +1125,11 @@
 % \end{macro}
 %
 % \begin{macro}[int]{\footins}
-%    \cmd{\skip\footins} 设置为 11bp 的 Times New Roman 的无网格单倍行距，并可无限伸
-%    长。
+%    \cmd{\skip\footins} 设置为 11bp 的 Times New Roman 的无网格单倍行距。
 %    \begin{macrocode}
 \dim_set:Nn \l_tmpa_dim  { 11bp }
 \dim_set:Nn { \skip\footins }
-  { \c_@@_baseline_ratio_times_tl \l_tmpa_dim plus 1fil }
+  { \c_@@_baseline_ratio_times_tl \l_tmpa_dim }
 %    \end{macrocode}
 % \end{macro}
 %
@@ -2094,6 +2104,107 @@
     tableposition  = top
   }
 %    \end{macrocode}
+%
+% \subsection{交叉引用 Cross referencing}
+% \subsubsection{脚注 Footnotes}
+% \begin{macro}[int]{\footnoterule}
+%    参照 Word 的脚注分隔符样式。
+%    \begin{macrocode}
+\RenewDocumentCommand \footnoterule { }
+  {
+    \kern-5.25\p@
+    \hrule height 0.5bp width 2in
+    \kern4.75\p@
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[int]{\@makefntext}
+%    脚注文本按照要求悬挂缩进 1.5 汉字，脚注编号不上标，在左侧 1 个汉字宽度内居中。
+%
+%    格式要求未明确脚注内分段如何处理。这里采用新段落首行缩进两汉字字符。
+%    \begin{macrocode}
+\cs_set:Npn  \@makefntext #1
+  {
+    \dim_set:Nn \leftskip  { 1.5\ccwd }
+    \dim_set:Nn \parindent { 2\ccwd }
+    \tex_noindent:D
+    \hbox_to_zero:n
+      {
+        \skip_horizontal:n { -1.5\ccwd }
+        \tex_hss:D \@thefnmark \tex_hss:D
+        \skip_horizontal:n { .5\ccwd }
+      }
+    #1
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[int]{\thefootnote}
+%    脚注编号样式设置为带圈数字，强制使用 CJK 字体。
+%    \begin{macrocode}
+\RenewDocumentCommand \thefootnote { }
+  {
+    {
+      \CJKfamily+ {}
+      \exp_args:Ne \textcircled { { \arabic { footnote } } }
+    }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[int]{\textcircled}
+%    字体没有对应 Unicode 字符时，带圈字符使用 \cs{ooalign} 实现。参照中易宋体的字符，圆
+%    圈为 0.9 倍字号大小，文字缩小为 0.7 倍，在圆圈中垂直居中。
+%    \begin{macrocode}
+\DeclareUnicodeCommand \textcircled [1]
+  {
+    \mode_leave_vertical:
+    {
+      \ooalign
+        {
+          \tex_hss:D
+          \dim_set:Nn \l_tmpa_dim { \f@size pt }
+          \dim_set:Nn \l_tmpa_dim { 0.7 \l_tmpa_dim }
+          \tex_raise:D 0.107825em
+            \hbox:n
+              {
+                \set@fontsize
+                  \f@linespread { \dim_use:N \l_tmpa_dim } \f@baselineskip
+                \selectfont \upshape #1
+              }
+          \tex_hss:D
+          \tex_crcr:D
+          \box_resize_to_wd:Nn \l_@@_text_circle_box { 0.9em }
+          \box_use:N \l_@@_text_circle_box
+        }
+    }
+  }
+%    \end{macrocode}
+%    将 1--20 的带圈数字对应到 Unicode 字符。
+%    \begin{macrocode}
+\int_set_eq:NN \l_tmpa_int \c_one_int
+\int_do_until:nNnn { \l_tmpa_int } > { 20 }
+  {
+    \exp_args:Nnee \DeclareUnicodeComposite { \textcircled }
+      { \int_use:N \l_tmpa_int }  { \int_eval:n { \l_tmpa_int + "245F } }
+    \int_incr:N \l_tmpa_int
+  }
+\xeCJK_declare_char_class:nn { CJK } { "2460 -> "2473 }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\l_@@_text_circle_box}
+%    保存绘制好的圆圈至盒子中。
+%    \begin{macrocode}
+\box_new:N \l_@@_text_circle_box
+\hbox_set:Nn \l_@@_text_circle_box
+  {
+    \tikz[baseline]
+      \draw[line~width=0.03em] (0, 0.359375em) circle [radius=0.45em];
+  }
+%    \end{macrocode}
+% \end{macro}
 %
 % \subsection{本地化 Localization}
 %    大多数本地化通过 \pkg{babel} 自动完成。
