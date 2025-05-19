@@ -1247,6 +1247,7 @@
     direction           .tl_set:N    = \l_@@_direction_tl,
     cmentor             .clist_set:N = \l_@@_mentor_chinese_clist,
     academic-degree     .bool_set:N  = \l_@@_academic_degree_bool,
+    academic-degree     .initial:n   = true,
     academic-degree     .default:n   = true,
     professional-degree .bool_set_inverse:N  =
       \l_@@_academic_degree_bool,
@@ -1547,7 +1548,7 @@
               \skip_vertical:N \l_@@_tmpb_skip
             }
           \strut \l_@@_date_tl
-          \skip_vertical:N \l_@@_tmpc_skip
+          \skip_vertical:n { \l_@@_tmpc_skip - \maxdepth }
         }
       }
     \end { titlepage }
@@ -1787,6 +1788,10 @@
     \newpage
     \thispagestyle { empty }
     \cleardoublepage
+%    \end{macrocode}
+%    避免 \cs{maketitle} 被再次调用。
+%    \begin{macrocode}
+    \cs_undefine:N \maketitle
   }
 %    \end{macrocode}
 % \end{macro}
