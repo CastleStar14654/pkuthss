@@ -2271,6 +2271,33 @@
   }
 %    \end{macrocode}
 %
+% \subsection{初始化 Initialization}
+%    毕业或学位论文插入偶数页页眉。
+%    \begin{macrocode}
+\pagestyle { pkuthss }
+\str_if_eq:VnF \l_@@_thesis_type_str { postdoc }
+  {
+    \exp_args:Nne \mark_insert:nn { pkuthss-thesis-type }
+      {
+        \prop_item:Ne \l_@@_metadata_label_prop
+          { \l_@@_thesis_type_str -header }
+      }
+  }
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+\AtBeginDocument { \selectlanguage { \l_@@_main_language_tl } }
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+\@@_set_metadata:n
+  {
+    date =
+      \zhdigits { \int_use:N \tex_year:D  } 年
+      \zhnumber { \int_use:N \tex_month:D } 月
+  }
+%    \end{macrocode}
+%
 %    \begin{macrocode}
 %</cls>
 %    \end{macrocode}
