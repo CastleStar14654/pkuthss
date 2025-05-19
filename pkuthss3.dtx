@@ -191,6 +191,15 @@
 %    \end{macrocode}
 % \end{macro}
 %
+% \begin{macro}{chapter-localization, \l_@@_chapter_localization_bool}
+%    控制是否将章节序号（“第一章”等）按照 \verb|language| 进行本地化。
+%    \begin{macrocode}
+    chapter-localization .bool_set:N = \l_@@_chapter_localization_bool,
+    chapter-localization .initial:n  = true,
+    chapter-localization .usage:n    = load,
+%    \end{macrocode}
+% \end{macro}
+%
 % \begin{macro}{space-below-footer, \l_@@_space_below_footer_bool}
 %    是否模拟 MS Word 默认在页脚文字段后添加 8bp 间距的行为。
 %    \begin{macrocode}
@@ -827,6 +836,99 @@
 %    \end{macrocode}
 % \end{macro}
 %
+% \subsection{文档部件 Document markup}
+% \subsubsection{章节 Chapters and sections}
+% \begin{macro}{\chapter}
+%    \TeX{} 中的竖直间距是相对于基线间距 \cs{baselineskip} 添加的，而格式要求是按照 Word
+%    语境定义，指相对于最紧间距外额外添加的间距，因此都需要重新计算。
+%
+%    章标题前的空白要求为 24bp。间距从 \cs{topskip} 处开始计算，并需减去章节名字号的行距。
+%    \begin{macrocode}
+\LARGE
+\dim_gset:Nn \l_tmpa_dim { 24bp + \box_ht:N \strutbox }
+\dim_gsub:Nn \l_tmpa_dim { \topskip + \baselineskip }
+\dim_gset:Nn \l_tmpb_dim { 18bp + \box_dp:N \strutbox }
+\normalsize
+\dim_gadd:Nn \l_tmpb_dim { \box_ht:N \strutbox }
+\dim_gsub:Nn \l_tmpb_dim { \baselineskip }
+%    \end{macrocode}
+%    由于 C\TeX{} 内部将 beforeskip 与 afterskip 存储为 token list，这里需要将输入值
+%    展开。
+%    \begin{macrocode}
+\exp_args:Ne \ctex_set:n
+  {
+    chapter =
+      {
+        beforeskip = \dim_use:N \l_tmpa_dim,
+        afterskip  = \dim_use:N \l_tmpb_dim
+      }
+  }
+%    \end{macrocode}
+%    页面及字体样式设置。
+%    \begin{macrocode}
+\ctex_set:n
+  {
+    chapter =
+      {
+        pagestyle = pkuthss,
+        format    = \LARGE\centering,
+        aftername = \skip_horizontal:n { 1\ccwd }
+      },
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\section, \subsection, \subsubsection}
+%    由于其他各级标题的行距都与正文相同，因此设置都比较简单。
+%    \begin{macrocode}
+    section =
+      {
+        beforeskip = 24bp,
+        afterskip  = 6bp,
+        format     = \Large,
+        aftername  = \skip_horizontal:n { 1\ccwd }
+      },
+    subsection =
+      {
+        beforeskip = 12bp,
+        afterskip  = 6bp,
+        format     = \large,
+        aftername  = \skip_horizontal:n { 1\ccwd }
+      },
+    subsubsection =
+      {
+        beforeskip = 12bp,
+        afterskip  = 6bp,
+        format     = \normalsize,
+        aftername  = \skip_horizontal:n { 1\ccwd }
+      },
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\paragraph, \subparagraph}
+%    更深一级的标题没有格式要求，仿照 \cs{subsubsection} 进行了设置。
+%    \begin{macrocode}
+    paragraph =
+      {
+        beforeskip = 12bp,
+        afterskip  = 1\ccwd,
+        format     = \normalsize,
+        aftername  = \skip_horizontal:n { 1\ccwd }
+      },
+    subparagraph =
+      {
+        beforeskip = 6bp,
+        afterskip  = 1\ccwd,
+        format     = \normalsize,
+        aftername  = \skip_horizontal:n { 1\ccwd }
+      },
+%    \end{macrocode}
+% \end{macro}
+%
+%    章节编号至 \cs{subsubsection}。
+%    \begin{macrocode}
+    secnumdepth = 3
+  }
+%    \end{macrocode}
 %
 % \subsection{本地化 Localization}
 %    大多数本地化通过 \pkg{babel} 自动完成。
@@ -870,6 +972,26 @@
     \addto \noextrasjapanese { \@@_set_latin_baseline: }
     \addto \extraskorean     { \@@_set_cjk_baseline: }
     \addto \noextraskorean   { \@@_set_latin_baseline: }
+  }
+%    \end{macrocode}
+%
+% \subsubsection{本地化章节编号 Localization of chapter numberings}
+%    需要等到 \pkg{babel} 加载中文后再进行修改，因此使用 \cs{AtBeginDocument}。
+%    \begin{macrocode}
+\bool_if:NT \l_@@_chapter_localization_bool
+  {
+    \AtBeginDocument
+      {
+        \cs_set_eq:NN \bbl@chapterfmt@chinese  \CTEXthechapter
+        \cs_set_eq:NN \bbl@chapterfmt@japanese \CTEXthechapter
+        \cs_set_eq:NN \CTEXthechapter          \bbl@chfmt
+        \cs_set:Npn \CTEX@chaptername
+          {
+            {
+              \CTEX@chapter@nameformat { \CTEXthechapter }
+            }
+          }
+      }
   }
 %    \end{macrocode}
 %
