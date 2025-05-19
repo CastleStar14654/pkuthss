@@ -2076,7 +2076,8 @@
   }
   {
     \tex_vfill:D
-    #3
+    \strut
+    \text_uppercase:n { \textbf {#3} } ~
     \clist_use:nn {#5} {#4}
   }
 %    \end{macrocode}
@@ -2103,11 +2104,11 @@
     \bool_if:NTF \l_@@_anonymous_bool
       {
         \abstract [ \l_@@_english_variant_tl ]
-          { KEY~WORDS:~ } [ ,~ ] {#1}
+          { KEY~WORDS: } [ ,~ ] {#1}
       }
       {
         \abstract [ \l_@@_english_variant_tl ]
-          [ \l_@@_title_english_tl ] { KEY~WORDS:~ } [ ,~ ] {#1}
+          [ \l_@@_title_english_tl ] { KEY~WORDS: } [ ,~ ] {#1}
         {
           \centering
           \tl_use:N \l_@@_name_english_tl \c_space_tl
