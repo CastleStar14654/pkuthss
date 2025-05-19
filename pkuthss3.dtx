@@ -400,7 +400,9 @@
 \RequirePackage [ \l_@@_footmisc_option_clist ] { footmisc }
 \RequirePackage { etoolbox }
 \RequirePackage { tikz }
+\RequirePackage { xcolor }
 \RequirePackage { unicode-math }
+\RequirePackage [ bookmarksnumbered ] { hyperref }
 %    \end{macrocode}
 %
 % \subsubsection{\pkg{babel} 语言设置 \pkg{babel} settings}
@@ -1652,10 +1654,40 @@
 %    \end{macrocode}
 % \end{macro}
 %
-% \begin{macro}{\@@_pku_logo:}
-%    TODO
+% \begin{macro}[int]
+%   {beidared, \c_@@_pku_logo_url_tl, \c_@@_pku_logo_file_tl, \@@_pku_logo:}
+%    北大红的定义互相之间并不一致，这里采用 RGB 色彩模型。
 %    \begin{macrocode}
-\cs_new:Nn \@@_pku_logo: { \rule { 8.41cm } { 2.36cm } }
+\color_set:nnn { beidared } { RGB } { 139, 0, 18 }
+\definecolor   { beidared } { RGB } { 139, 0, 18 }
+%    \end{macrocode}
+%    若不存在 logo 定义文件，在 logo 盒子中给出下载提示。
+%    \begin{macrocode}
+\str_const:Nn \c_@@_pku_logo_url_str { TBD }
+\tl_const:Nn  \c_@@_pku_logo_file_tl { pkuthss3-pkulogo.tex }
+\file_if_exist_input:nF { \c_@@_pku_logo_file_tl }
+  {
+    \cs_new:Nn \@@_pku_logo:
+      {
+        {
+          \color_select:n { beidared }
+          \dim_set:Nn \fboxrule { 1pt }
+          \dim_set:Nn \fboxsep  { -\fboxrule }
+          \framebox
+            {
+              \parbox [ b ] [ 2.36cm ] [ c ] { 8.41cm }
+                {
+                  \linespread{1.5}
+                  \centering \footnotesize
+                  请前往下方 URL 下载 \texttt{\c_@@_pku_logo_file_tl} \\
+                  { \small \url { \c_@@_pku_logo_url_str } } \\
+                  Download~\texttt{\c_@@_pku_logo_file_tl}~at~the~URL~above
+                  \tex_par:D
+                }
+            }
+        }
+      }
+  }
 %    \end{macrocode}
 % \end{macro}
 %
