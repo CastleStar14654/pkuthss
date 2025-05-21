@@ -94,7 +94,7 @@
 \prop_gput:Nnn \g_msg_module_type_prop { pkuthss } { Class }
 %    \end{macrocode}
 %
-% \subsection{\LaTeX{} 内核版本检查 \LaTeX{} version check}
+% \subsection{引擎及 \LaTeX{} 内核版本检查 Engine and \LaTeX{} version check}
 %    本文档类使用了一些 2025/06/01 版本内核的功能，因此需要判断内核版本是否够新。
 %
 % \begin{macro}[int]{\IfFormatAtLeastTF}
@@ -116,6 +116,26 @@
     \endinput
   }
 %    \end{macrocode}
+%
+%    目前仅支持 \XeTeX 与 \LuaTeX。
+%    \begin{macrocode}
+\bool_lazy_or:nnF { \sys_if_engine_xetex_p: } { \sys_if_engine_luatex_p: }
+  {
+    \ClassError { pkuthss3 } { require~XeTeX~or~LuaTeX }
+      {
+        You~need~XeTeX~or~LuaTeX~to~use~pkuthss3.\\
+        使用~pkuthss3~需要~XeTeX~或~LuaTeX~引擎。
+      }
+    \endinput
+  }
+%    \end{macrocode}
+%
+% \begin{macro}{\@@_xetex_luatex_cases:nn}
+%    提供分别处理 \XeTeX 与 \LuaTeX 的命令。
+%    \begin{macrocode}
+\cs_new_eq:NN \@@_xetex_luatex_cases:nn \sys_if_engine_xetex:TF
+%    \end{macrocode}
+% \end{macro}
 %
 % \subsection{内部函数与变量 Internal functions and variables}
 %
@@ -484,6 +504,33 @@
   {
     \cs_set_eq:NN \@@_fontset_song_hei_case:nnn
       \@@_fontset_case:nnn
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_fnmark_font:}
+%    \LuaTeX 下无法使用 \cs{CJKfamily+}，但在排版脚注的带圈数字时需要使全局字体都为中文默
+%    认衬线字体。通过重定义 \cs{setCJKmainfont}，使 \cs{@@_fnmark_font:} 为中西文都生
+%    效的中文衬线字体。
+%    \begin{macrocode}
+\@@_xetex_luatex_cases:nn
+  { \cs_new:Nn \@@_fnmark_font: { \CJKfamily+{} } }
+  {
+    \RenewDocumentCommand \setCJKmainfont { o m o }
+      {
+        \tl_if_novalue:nTF {#1}
+          {
+            \exp_args:Nnee \ctex_ltj_set_family:nnn { \CJKrmdefault } {#3} {#2}
+            \setfontfamily { \@@_fnmark_font: } {#2} [#3]
+          }
+          {
+            \exp_args:Nnee \ctex_ltj_set_family:nnn { \CJKrmdefault } {#1} {#2}
+            \setfontfamily { \@@_fnmark_font: } {#2} [#1]
+            \tl_if_novalue:nF {#3} { [#3] }
+          }
+        \normalfont
+      }
+    \cs_new_eq:NN \@@_fnmark_font: \prg_do_nothing:
   }
 %    \end{macrocode}
 % \end{macro}
@@ -1465,7 +1512,7 @@
                 {
                   \prop_item:Nn \l_@@_metadata_label_prop
                     { title_chinese }
-                  ：
+                  \@@_fw_colon:
                 }
             }
           &
@@ -1626,9 +1673,9 @@
 \cs_new:Nn \@@_meta_stretch_box:nn
   {
     \group_begin:
-      \sys_if_engine_luatex:TF
-        { \ltjsetparameter { kanjiskip = { 0pt plus 1fil minus 1fil } } }
+      \@@_xetex_luatex_cases:nn
         { \cs_set:Npn \CJKglue { \tex_hss:D } }
+        { \ltjsetparameter { kanjiskip = { 0pt plus 1fil minus 1fil } } }
       \hbox_to_wd:nn {#1} {#2}
     \group_end:
   }
@@ -2184,7 +2231,7 @@
 \RenewDocumentCommand \thefootnote { }
   {
     {
-      \CJKfamily+ {}
+      \@@_fnmark_font:
       \exp_args:Ne \textcircled { { \arabic { footnote } } }
     }
   }
@@ -2228,7 +2275,9 @@
       { \int_use:N \l_tmpa_int }  { \int_eval:n { \l_tmpa_int + "245F } }
     \int_incr:N \l_tmpa_int
   }
-\xeCJK_declare_char_class:nn { CJK } { "2460 -> "2473 }
+\@@_xetex_luatex_cases:nn
+  { \xeCJK_declare_char_class:nn { CJK } { "2460 -> "2473 } }
+  { \ltjdefcharrange { 6 } { "2460-"2473 } }
 %    \end{macrocode}
 % \end{macro}
 %
