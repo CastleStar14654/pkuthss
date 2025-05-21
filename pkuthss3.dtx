@@ -1539,12 +1539,14 @@
           \bool_if:NTF \l_tmpa_bool
             { \l_@@_title_chinese_tl }
             {
-              \dim_set:Nn \l_tmpb_dim { 2 \baselineskip }
-              \dim_add:Nn \l_tmpb_dim { \arrayrulewidth }
               \multirow { 2 } { * }
                 {
-                  \parbox [t] [ \l_tmpb_dim ] [t] { \linewidth }
-                    { \centering \l_@@_title_chinese_tl }
+                  \parbox [t] [ 2 \baselineskip ] [t] { \linewidth }
+                    {
+                      \dim_add:Nn \baselineskip { \arrayrulewidth }
+                      \centering \strut
+                      \l_@@_title_chinese_tl
+                    }
                 }
             }
           \\ \@@_meta_cline:
@@ -1612,6 +1614,11 @@
             }
           \strut \l_@@_date_tl
           \skip_vertical:n { \l_@@_tmpc_skip - \maxdepth }
+%    \end{macrocode}
+%    在 2025-06-01 之前版本的 \LaTeX 中，\cs{newpage} 会判断 \cs{prevdepth} 是否大于
+%    零，并在页尾减去这个值的竖直间距。这里将 \cs{prevdepth} 设置为 0 抑制这一行为。
+%    \begin{macrocode}
+          \dim_set:Nn \prevdepth { 0pt }
         }
       }
     \end { titlepage }
