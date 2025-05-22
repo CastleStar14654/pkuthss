@@ -1762,21 +1762,31 @@
 % \end{macro}
 %
 % \begin{macro}{\@@_typeset_degree_type:}
-%    根据用户选项确定学位类型前的框是否打勾。
+%    排版学位类型信息。
 %    \begin{macrocode}
 \cs_new:Nn \@@_typeset_degree_type:
   {
     \group_begin:
-      \bool_if:NTF \l_@@_academic_degree_bool
-        { \@@_check_box: } { \@@_empty_box: }
+      \@@_check_box_if:n { \l_@@_academic_degree_bool }
       \skip_horizontal:n { 0.5\ccwd }
       \prop_item:Nn \l_@@_metadata_label_prop { academic_degree }
       \skip_horizontal:n { 2\ccwd }
-      \bool_if:NTF \l_@@_academic_degree_bool
-        { \@@_empty_box: } { \@@_check_box: }
+      \@@_check_box_if:n
+        { \bool_not_p:n { \l_@@_academic_degree_bool } }
       \skip_horizontal:n { 0.5\ccwd }
       \prop_item:Nn \l_@@_metadata_label_prop { professional_degree }
     \group_end:
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_check_box_if:n}
+%    判断参数是否为真，输出打勾或空白的方框。
+%    \begin{macrocode}
+\cs_new:Nn \@@_check_box_if:n
+  {
+    \bool_if:nTF {#1}
+      { \@@_check_box: } { \@@_empty_box: }
   }
 %    \end{macrocode}
 % \end{macro}
@@ -1901,30 +1911,128 @@
 %
 % \subsubsection{声明 Declarations}
 % \begin{macro}{\@@_copyright_declaration:}
-%    定义简繁体两个版本。
+%    定义简繁体两个版本的版权声明。
 %    \begin{macrocode}
 \bool_if:NTF \l_@@_traditional_chinese_bool
   {
     \cs_new:Nn \@@_copyright_declaration:
       {
-        \chapter*{版權聲明}
-        \thispagestyle{empty}
-        任何收存和保管本論文各種版本的單位和個人，
-        未經本論文作者同意，不得將本論文轉借他人，
-        亦不得隨意複製、抄錄、拍照或以任何方式傳播。
-        否則，引起有礙作者著作權之問題，將可能承擔法律責任。
+        \begin{selectlanguage}{chinese}
+          \chapter*{版權聲明}
+          \thispagestyle{empty}
+          任何收存和保管本論文各種版本的單位和個人，
+          未經本論文作者同意，不得將本論文轉借他人，
+          亦不得隨意複製、抄錄、拍照或以任何方式傳播。
+          否則，引起有礙作者著作權之問題，將可能承擔法律責任。
+        \end{selectlanguage}
       }
   }
   {
     \cs_new:Nn \@@_copyright_declaration:
       {
-        \chapter*{版权声明}
-        \thispagestyle{empty}
-        任何收存和保管本论文各种版本的单位和个人，
-        未经本论文作者同意，不得将本论文转借他人，
-        亦不得随意复制、抄录、拍照或以任何方式传播。
-        否则，引起有碍作者著作权之问题，将可能承担法律责任。
+        \begin{selectlanguage}{chinese}
+          \chapter*{版权声明}
+          \thispagestyle{empty}
+          任何收存和保管本论文各种版本的单位和个人，
+          未经本论文作者同意，不得将本论文转借他人，
+          亦不得随意复制、抄录、拍照或以任何方式传播。
+          否则，引起有碍作者著作权之问题，将可能承担法律责任。
+        \end{selectlanguage}
       }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_original_usage_statement:n, \statement}
+%    参数为保密期限。
+%
+%    博后报告与学位论文的原创性声明和使用授权说明有微妙区别，通过一些临时的 token list 或是
+%    使用 \cs{@@_thesis_postdoc:nn} 来区别。声明内容仅提供简中版本，但若论文使用繁体中文
+%    撰写，在目录与 PDF 书签中使用繁体标题。
+%    \begin{macrocode}
+\cs_new:Nn \@@_original_usage_statement:n
+  {
+    \begin { selectlanguage } { chinese }
+      \ctexset{ section / format += \centering }
+      \str_if_eq:VnTF \l_@@_thesis_type_str { postdoc }
+        {
+          \tl_set:Nn \l_@@_tmpa_tl { 博士后研究报告 }
+          \tl_set:Nn \l_@@_tmpb_tl { 博士後研究報告 }
+          \tl_set:Nn \l_@@_tmpc_tl { 报告 }
+          \cs_set_eq:NN \@@_thesis_postdoc:nn \use_ii:nn
+        }
+        {
+          \tl_set:Nn \l_@@_tmpa_tl { 学位论文 }
+          \tl_set:Nn \l_@@_tmpb_tl { 學位論文 }
+          \tl_set:Nn \l_@@_tmpc_tl { 论文 }
+          \cs_set_eq:NN \@@_thesis_postdoc:nn \use_i:nn
+        }
+      \tl_set:Ne \l_tmpa_tl
+        { 北京大学 \l_@@_tmpa_tl 原创性声明和使用授权说明 }
+      \bool_if:NTF \l_@@_traditional_chinese_bool
+        {
+          \tl_set:Ne \l_tmpb_tl
+            { 北京大學 \l_@@_tmpb_tl 原創性聲明和使用授權說明 }
+        }
+        { \tl_set_eq:NN \l_tmpb_tl \l_tmpa_tl }
+%    \end{macrocode}
+%    为防止目录出现问题，\cs{chapter} 的参数都需要展开。
+%    \begin{macrocode}
+      \cs_set:Nn \@@_chapter:
+        { \exp_args:NNV \chapter [ \l_tmpb_tl ] }
+      \exp_args:NV \@@_chapter: \l_tmpa_tl
+      \section*{原创性声明}
+      本人郑重声明：所呈交的 \l_@@_tmpa_tl ，是本人在
+      \@@_thesis_postdoc:nn {} { 合作 } 导师的指导下，
+      独立进行研究工作所取得的成果。除文中已经注明引用的内容外，
+      本论文不含任何其他个人或集体已经发表或撰写过的作品或成果。
+      对本文的研究做出重要贡献的个人和集体，均已在文中以明确方式标明。
+      本声明的法律结果由本人承担。
+      \medskip
+      \begin{flushright}
+        \l_@@_tmpc_tl 作者签名： \skip_horizontal:n { 6em }
+        日期： \skip_horizontal:n { 3.5em } 年
+        \skip_horizontal:n { 1.5em } 月 \skip_horizontal:n { 1.5em } 日
+      \end{flushright}
+      \bigskip
+      \section*
+        {
+          \l_@@_tmpa_tl 使用授权说明 \\
+          {
+            \zihao{-5}\normalfont
+            （必须装订在提交学校图书馆的印刷本
+            \@@_thesis_postdoc:nn { } { 中 } ）
+          }
+        }
+      本人完全了解北京大学关于收集、保存、使用 \l_@@_tmpa_tl 的规定，即：
+      \begin{itemize}
+        \item 按照学校要求提交 \l_@@_tmpa_tl 的印刷本和电子版本；
+        \item 学校有权保存 \l_@@_tmpa_tl 的印刷本和电子版，
+              并提供目录检索与阅览服务，在校园网上提供服务；
+        \item 学校可以采用影印、缩印、数字化或其它复制手段保存
+              \@@_thesis_postdoc:nn { 论文 } { 博士后研究报告 } ；
+        \item 因 \@@_thesis_postdoc:nn { 某种 } { }
+              特殊原因需要延迟发布 \l_@@_tmpa_tl 电子版，
+              授权学校
+              \@@_check_box_if:n { \int_compare_p:nNn {#1} = { 1 } }
+              一年$/$~
+              \@@_check_box_if:n { \int_compare_p:nNn {#1} = { 2 } }
+              两年$/$~
+              \@@_check_box_if:n { \int_compare_p:nNn {#1} = { 3 } }
+              三年以后，在校园网上全文发布。
+      \end{itemize}
+      \begin{center}
+        （ \@@_thesis_postdoc:nn { 保密论文 } { 涉密报告 }
+        在解密后遵守此规定）
+        \par\bigskip
+        \l_@@_tmpc_tl 作者签名：
+        \hskip5.5em
+        \@@_thesis_postdoc:nn {} { 合作 } 导师签名：
+        \\
+        日期： \skip_horizontal:n { 3.5em } 年
+        \skip_horizontal:n { 1.5em } 月 \skip_horizontal:n { 1.5em } 日
+      \end{center}
+    \end { selectlanguage }
   }
 %    \end{macrocode}
 % \end{macro}
