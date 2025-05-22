@@ -1794,13 +1794,16 @@
 % \begin{macro}{\@@_symbol_font:}
 %    为勾选框提供字体；选取了各平台上的几款字体备用。如果这些字体不存在，则什么都不做。
 %    \begin{macrocode}
-\@@_fontset_case:nnn
+\sys_if_platform_windows:TF
   { \newfontface \@@_symbol_font: { Segoe~UI~Symbol } }
-  { \newfontface \@@_symbol_font: { Apple~Symbols } }
   {
-    \fontspec_font_if_exist:nT { DejaVu~Sans }
+    \ctex_if_platform_macos:TF
+      { \newfontface \@@_symbol_font: { Apple~Symbols } }
       {
-        \newfontface \@@_symbol_font: { DejaVu~Sans }
+        \fontspec_font_if_exist:nT { DejaVu~Sans }
+          {
+            \newfontface \@@_symbol_font: { DejaVu~Sans }
+          }
       }
   }
 \cs_if_free:NT \@@_symbol_font:
