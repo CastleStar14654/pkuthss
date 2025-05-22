@@ -819,15 +819,11 @@
 %    \begin{macrocode}
 \tl_new:N \l_@@_baseline_ratio_tl
 \tl_new:N \l_@@_ascender_ratio_tl
-\tl_set_eq:NN \l_@@_baseline_ratio_tl
-  \c_@@_baseline_ratio_simsun_tl
-\tl_set_eq:NN \l_@@_ascender_ratio_tl
-  \c_@@_ascender_ratio_simsun_tl
 %    \end{macrocode}
 % \end{macro}
 %
 % \begin{macro}{\@@_set_cjk_baseline:, \@@_set_latin_baseline:}
-%    简便设置的简写。
+%    设置基线参数的宏，设置后需要重新应用当前字号，以使更新对当前字号生效。初始设置为西文参数。
 %    \begin{macrocode}
 \cs_new:Nn \@@_set_cjk_baseline:
   {
@@ -835,6 +831,7 @@
       \c_@@_baseline_ratio_simsun_tl
     \tl_set_eq:NN \l_@@_ascender_ratio_tl
       \c_@@_ascender_ratio_simsun_tl
+    \@currsize
   }
 \cs_new:Nn \@@_set_latin_baseline:
   {
@@ -842,6 +839,7 @@
       \c_@@_baseline_ratio_times_tl
     \tl_set_eq:NN \l_@@_ascender_ratio_tl
       \c_@@_ascender_ratio_times_tl
+    \@currsize
   }
 \@@_set_latin_baseline:
 %    \end{macrocode}
@@ -861,7 +859,8 @@
 %    若留空 \meta{baseline skip}，则相当于 Word 中的倍数行距设置。倍数行距的行为会根据是
 %    否启用网格（\cmd{word-grid}）而有所不同。同时，具体字体也对倍数行距的行为有所影响。
 %
-%    目前的实现为全部假设为中易宋体。
+%    目前的实现为，若当前语言为中日韩，则假设为中易宋体；否则假设为 Times New Roman。由于
+%    \cs{normalsize} 是固定行距，因此实际有区别的范围不大。
 %
 %    启用网格时，中易宋体与 Times New Roman 的基线位置几乎没有差别；不启用网格时（如脚注）
 %    两者差异较大。
