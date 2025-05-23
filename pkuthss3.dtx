@@ -927,7 +927,7 @@
     \dim_gsub:Nn \g_tmpa_dim { \g_tmpb_dim }
     \hbox_set:Nn \strutbox
       {
-        \tex_vrule:D height \g_tmpb_dim depth \g_tmpa_dim width 0bp
+        \tex_vrule:D height \g_tmpb_dim depth \g_tmpa_dim width \c_zero_dim
       }
   }
 %    \end{macrocode}
@@ -1235,7 +1235,8 @@
         \hbox_to_wd:nn { \c_@@_header_rule_dim }
           { \strut \tex_hss:D #1 \tex_hss:D }
         \skip_vertical:n { 1bp }
-        \tex_hrule:D height 0.75bp width \c_@@_header_rule_dim depth 0bp
+        \tex_hrule:D height 0.75bp width \c_@@_header_rule_dim
+          depth \c_zero_dim
       }
     \tex_hss:D
   }
@@ -1432,7 +1433,7 @@
   {
     thesis-name        : tokenlist,
     before-logo-skip   : skip      = 15.6bp,
-    after-title-skip   : skip      = 0pt plus 1fill,
+    after-title-skip   : skip      = \c_zero_dim plus 1fill,
     after-meta-skip    : skip      = 39bp,
     after-degree-skip  : skip      = 19.5bp,
     after-date-skip    : skip      = 1.14803bp,
@@ -1480,9 +1481,9 @@
       \selectlanguage { chinese }
       \bool_set_eq:NN \l_@@_word_grid_bool \c_true_bool
       \tl_set:Nn \arraystretch { 1 }
-      \dim_set:Nn \parindent { 0pt }
+      \dim_zero:N \parindent
       \dim_set:Nn \tabcolsep { 0.19cm }
-      \dim_set:Nn \lineskip { 0pt }
+      \dim_zero:N \lineskip
       \dim_set:Nn \arrayrulewidth { 0.75bp }
 %    \end{macrocode}
 % \subparagraph{校徽、校名题字以及论文类型}
@@ -1617,7 +1618,7 @@
 %    在 2025-06-01 之前版本的 \LaTeX 中，\cs{newpage} 会判断 \cs{prevdepth} 是否大于
 %    零，并在页尾减去这个值的竖直间距。这里将 \cs{prevdepth} 设置为 0 抑制这一行为。
 %    \begin{macrocode}
-          \dim_set:Nn \prevdepth { 0pt }
+          \dim_zero:N \prevdepth
         }
       }
     \end { titlepage }
@@ -1650,7 +1651,7 @@
           \strut \zihao{-2}\fangsong
           \prop_item:Nn \l_@@_metadata_label_prop { anonymous_label }
         }
-        \skip_vertical:n { 0pt plus 0.5fill }
+        \skip_vertical:n { \c_zero_dim plus 0.5fill }
       }
       \clist_map_inline:nn { chinese , english }
         {
@@ -1673,7 +1674,7 @@
       \tex_vfill:D
       \centering
       \@@_typeset_degree_type:
-      \skip_vertical:n { 0pt plus 0.5fill }
+      \skip_vertical:n { \c_zero_dim plus 0.5fill }
       \l_@@_date_tl
       \tex_vfill:D
     \end { titlepage }
@@ -1697,7 +1698,7 @@
     \group_begin:
       \@@_xetex_luatex_cases:nn
         { \cs_set:Npn \CJKglue { \tex_hss:D } }
-        { \ltjsetparameter { kanjiskip = { 0pt plus 1fil minus 1fil } } }
+        { \ltjsetparameter { kanjiskip = { \c_zero_dim plus 1fil minus 1fil } } }
       \hbox_to_wd:nn {#1} {#2}
     \group_end:
   }
@@ -1901,10 +1902,10 @@
   {
     thesis-name        =
       \prop_item:Nn \l_@@_metadata_label_prop { bachelor },
-    before-logo-skip   = 0pt,
-    after-title-skip   = 0pt plus 1fill,
-    after-meta-skip    = 0pt plus 1fill,
-    after-date-skip    = 0pt plus 0.5fill,
+    before-logo-skip   = \c_zero_skip,
+    after-title-skip   = \c_zero_skip plus 1fill,
+    after-meta-skip    = \c_zero_skip plus 1fill,
+    after-date-skip    = \c_zero_skip plus 0.5fill,
     show-english-title = true,
     show-direction     = false,
     show-degree-type   = false
