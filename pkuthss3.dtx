@@ -421,6 +421,7 @@
 \RequirePackage { etoolbox }
 \RequirePackage { tikz }
 \RequirePackage { xcolor }
+\RequirePackage { titletoc }
 \RequirePackage { unicode-math }
 \RequirePackage [ bookmarksnumbered ] { hyperref }
 %    \end{macrocode}
@@ -2325,6 +2326,73 @@
 %    \end{macrocode}
 %
 % \subsection{交叉引用 Cross referencing}
+% \subsubsection{目录等 Table of contents, etc.}
+% \paragraph{目录 Table of contents}
+%    折行标题右侧留三个汉字距离。
+%    \begin{macrocode}
+\contentsmargin [ 3\ccwd ] { \c_zero_dim }
+%    \end{macrocode}
+%    章标题前空 6bp。因为无明确要求，故保留 \LaTeX{} 原始的无前导符格式。
+%    \begin{macrocode}
+\titlecontents { chapter } [ \c_zero_dim ]
+  {
+    \skip_vertical:n { 6bp }
+    \heiti \bfseries
+  }
+  { \contentspush { \thecontentslabel \skip_horizontal:n { 0.7\ccwd } } }
+  { }
+  { \pkuthss_toc_chap_leader: \rmfamily \thecontentspage }
+%    \end{macrocode}
+%    以下各级标题依次增加一个汉字字符的缩进。虽然没有要求，但还是先定义 \cs{subsubsection}
+%    的目录格式。
+%    \begin{macrocode}
+\clist_map_inline:nn
+  {
+    { section }       [ 1\ccwd ] ,
+    { subsection }    [ 2\ccwd ] ,
+    { subsubsection } [ 3\ccwd ] ,
+  }
+  {
+    \titlecontents #1 { }
+      { \contentspush { \thecontentslabel \skip_horizontal:n { \ccwd } } }
+      { }
+      { \pkuthss_toc_leader: \thecontentspage }
+  }
+%    \end{macrocode}
+%
+% \begin{macro}{\pkuthss_toc_chap_leader:, \pkuthss_toc_leader:}
+%    目录章以及次级标题前导符。
+%    \begin{macrocode}
+\cs_new:Nn \pkuthss_toc_chap_leader: { \tex_hfill:D }
+\cs_new:Nn \pkuthss_toc_leader: { \titlerule * [ 6bp ] { . } }
+%    \end{macrocode}
+% \end{macro}
+%
+% \paragraph{插图和表格清单 Lists of figures and tables}
+%    顶格，其他格式类似目录的 section 层。
+%    \begin{macrocode}
+\titlecontents { figure } [ \c_zero_dim ] { }
+  { \contentspush { \thecontentslabel \skip_horizontal:n { \ccwd } } }
+  { }
+  { \pkuthss_toc_leader: \thecontentspage }
+\titlecontents { table } [ \c_zero_dim ] { }
+  { \contentspush { \thecontentslabel \skip_horizontal:n { \ccwd } } }
+  { }
+  { \pkuthss_toc_leader: \thecontentspage }
+%    \end{macrocode}
+%
+%    避免插图或表格清单中在章节间添加额外间距。
+%    \begin{macrocode}
+\ctex_set:n
+  {
+    chapter =
+      {
+        lofskip   = \c_zero_dim,
+        lotskip   = \c_zero_dim
+      }
+  }
+%    \end{macrocode}
+%
 % \subsubsection{脚注 Footnotes}
 % \begin{macro}[int]{\footnoterule}
 %    参照 Word 的脚注分隔符样式。
