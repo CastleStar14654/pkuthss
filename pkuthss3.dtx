@@ -168,6 +168,15 @@
 %    \end{macrocode}
 % \end{macro}
 %
+% \begin{macro}{\l_@@_biblatex_load_bool, \l_@@_author_year_bool}
+%    设置是否由本文档类载入 \pkg{biblatex}，以及如果是，是否采用著者--出版年格式。
+%    \begin{macrocode}
+\bool_new:N      \l_@@_biblatex_load_bool
+\bool_set_true:N \l_@@_biblatex_load_bool
+\bool_new:N      \l_@@_author_year_bool
+%    \end{macrocode}
+% \end{macro}
+%
 % \begin{macro}
 %   {
 %     \@@_define_option:n, \@@_define_metadata:n,
@@ -290,6 +299,20 @@
 %    \end{macrocode}
 % \end{macro}
 %
+% \begin{macro}{biblatex-style}
+%    \begin{macrocode}
+    biblatex-style .choice:,
+    biblatex-style / authoryear .code:n =
+      { \bool_set_true:N \l_@@_author_year_bool },
+    biblatex-style / numeric    .code:n =
+      { \bool_set_false:N \l_@@_author_year_bool },
+    biblatex-style / none       .code:n =
+      { \bool_set_false:N \l_@@_biblatex_load_bool },
+    biblatex-style .initial:n = numeric,
+    biblatex-style .usage:n   = load,
+%    \end{macrocode}
+% \end{macro}
+%
 % \begin{macro}{chapter-localization, \l_@@_chapter_localization_bool}
 %    控制是否将章节序号（“第一章”等）按照 \opt{language} 进行本地化。
 %    \begin{macrocode}
@@ -352,6 +375,15 @@
           { \fp_eval:n \l_tmpa_fp bp }
       },
     word-grid-size .initial:n = 15.6,
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{bib-per-appendix, \l_@@_bib_per_appendix_bool}
+%    是否逐附录编制参考文献表。
+%    \begin{macrocode}
+    bib-per-appendix .bool_set:N = \l_@@_bib_per_appendix_bool,
+    bib-per-appendix .initial:n  = false,
+    bib-per-appendix .default:n  = true,
 %    \end{macrocode}
 % \end{macro}
 %
@@ -424,6 +456,13 @@
 \RequirePackage { titletoc }
 \RequirePackage { unicode-math }
 \RequirePackage [ bookmarksnumbered ] { hyperref }
+\bool_if:NT \l_@@_biblatex_load_bool
+  {
+    \bool_if:NTF \l_@@_author_year_bool
+      { \PassOptionsToPackage { style = gb7714-2015ay } { biblatex } }
+      { \PassOptionsToPackage { style = gb7714-2015 }   { biblatex } }
+    \RequirePackage [ natbib = true ] { biblatex }
+  }
 %    \end{macrocode}
 %
 % \subsubsection{\pkg{babel} 语言设置 \pkg{babel} settings}
@@ -2390,6 +2429,90 @@
         lofskip   = \c_zero_dim,
         lotskip   = \c_zero_dim
       }
+  }
+%    \end{macrocode}
+%
+% \subsubsection{参考文献 Bibliography}
+%    格式设置。临时将字号更改为参考文献表的字号，以使得字符宽度正确。
+%    \begin{macrocode}
+\bool_if:NT \l_@@_biblatex_load_bool
+  {
+    \bibfontsize
+%    \end{macrocode}
+%    著者--出版年格式下设置缩进格式；引用标记全角/半角设置稍后利用 \pkg{babel} 在本地化时
+%    进行。
+%    \begin{macrocode}
+    \bool_if:NTF \l_@@_author_year_bool
+      {
+        \ExecuteBibliographyOptions
+          {
+            gbcitelabel = parensqj,
+          }
+        \dim_set:Nn \bibitemindent { -2\ccwd }
+        \dim_set:Nn \bibhang { 2\ccwd }
+      }
+%    \end{macrocode}
+%    顺序编码时的缩进格式，设置为序号外挂。
+%    \begin{macrocode}
+      {
+        \ExecuteBibliographyOptions
+          {
+            gbalign = gb7714,
+          }
+        \dim_set:Nn \biblabelsep { 0.5em }
+      }
+%    \end{macrocode}
+%    通用设置。样例中未要求西文作者姓大写，因此保留输入的大小写格式。
+%    \begin{macrocode}
+    \ExecuteBibliographyOptions
+      {
+        gbnamefmt    = lowercase,
+        maxcitenames = 1,
+        mincitenames = 1
+      }
+%    \end{macrocode}
+%    字号与竖直间距。
+%    \begin{macrocode}
+    \tl_set:Nn \bibfont { \bibfontsize }
+    \slashstyle { same }
+    \dim_set:Nn \bibitemsep { 3bp }
+    \normalsize
+%    \end{macrocode}
+%    自动添加至目录
+%    \begin{macrocode}
+    \DeclarePrintbibliographyDefaults
+      { heading = bibintoc }
+%    \end{macrocode}
+% \begin{macro}{\appendix}
+%    附录参考文献单列设置。在 \cs{appendix} 中设置参考文献表在节一级、给 \cs{chapter}
+%    （其实是 \cs{@chapter}）加钩子实现重置引文计数并添加编号前缀、给参考文献表中的编号添加
+%    前缀。著者--出版年格式下前缀没有效果。
+%    \begin{macrocode}
+    \hook_gput_code:nnn { cmd / appendix / after } { bib-per-appendix }
+      {
+        \bool_if:NTF \l_@@_bib_per_appendix_bool
+          {
+            \DeclarePrintbibliographyDefaults { heading = subbibintoc }
+            \hook_gput_code:nnn { cmd / @chapter / after } { bib-per-appendix }
+              {
+                \newrefsection
+                \newrefcontext [ labelprefix = \Alph { chapter } . ]
+              }
+            \cs_set:Npn \mkgbnumlabel #1
+              {\mkbibbrackets{\Alph { chapter } . #1 } }
+          }
+%    \end{macrocode}
+%    若关闭逐附录分列参考文献功能，则在 \cs{appendix} 中将 \cs{printbibliography} 重定
+%    义为空操作。
+%    \begin{macrocode}
+          {
+            \cs_set_eq:NN \printbibliography \prg_do_nothing:
+          }
+      }
+%    \end{macrocode}
+% \end{macro}
+%
+%    \begin{macrocode}
   }
 %    \end{macrocode}
 %
