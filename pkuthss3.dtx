@@ -2037,12 +2037,7 @@
             { 北京大學 \l_@@_tmpb_tl 原創性聲明和使用授權說明 }
         }
         { \tl_set_eq:NN \l_tmpb_tl \l_tmpa_tl }
-%    \end{macrocode}
-%    为防止目录出现问题，\cs{chapter} 的参数都需要展开。
-%    \begin{macrocode}
-      \cs_set:Nn \@@_chapter:
-        { \exp_args:NNV \chapter [ \l_tmpb_tl ] }
-      \exp_args:NV \@@_chapter: \l_tmpa_tl
+      \chapter [ \l_tmpb_tl ] { \l_tmpa_tl }
       \section*{原创性声明}
       本人郑重声明：所呈交的 \l_@@_tmpa_tl ，是本人在
       \@@_thesis_postdoc:nn {} { 合作 } 导师的指导下，
@@ -2103,11 +2098,41 @@
 % \begin{macro}{\frontmatter}
 %    前言部分使用大写罗马数字标号。
 %    \begin{macrocode}
-\RenewDocumentCommand \frontmatter { }
+\hook_gput_code:nnn { cmd / frontmatter / after } { roman-numbering }
+  { \pagenumbering{Roman} }
+%    \end{macrocode}
+%    且章一级不出现在目录。
+%    \begin{macrocode}
+\hook_gput_code:nnn { cmd / frontmatter / after } { toc-depth }
   {
-    \cleardoublepage
-    \@mainmatterfalse
-    \pagenumbering{Roman}
+    \exp_args:Nne \addtocontents { toc }
+      {
+        \tl_to_str:n
+          {
+            \ExplSyntaxOn
+            \int_set_eq:Nc \l_tmpa_int { c@tocdepth }
+            \int_set:cn { c@tocdepth } { -1 }
+            \ExplSyntaxOff
+          }
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\mainmatter}
+%    正文开始，记录目录。
+%    \begin{macrocode}
+\hook_gput_code:nnn { cmd / mainmatter / after } { toc-depth }
+  {
+    \exp_args:Nne \addtocontents { toc }
+      {
+        \tl_to_str:n
+          {
+            \ExplSyntaxOn
+            \int_set_eq:cN { c@tocdepth } \l_tmpa_int
+            \ExplSyntaxOff
+          }
+      }
   }
 %    \end{macrocode}
 % \end{macro}
@@ -2203,13 +2228,6 @@
     secnumdepth = 3
   }
 %    \end{macrocode}
-%
-% \begin{macro}[int]{\@schapter}
-%    使无编号章生成页眉。
-%    \begin{macrocode}
-\apptocmd { \@schapter } { \chaptermark {#1} } { } { }
-%    \end{macrocode}
-% \end{macro}
 %
 % \subsubsection{列表 Lists}
 % \paragraph{一般列表参数 General list parameters}
@@ -2307,11 +2325,8 @@
   {
     \tl_if_novalue:nF {#1} { \selectlanguage {#1} }
     \tl_if_novalue:nTF {#2}
-      { \chapter* { \text_uppercase:n \abstractname } }
-      {
-        \chapter* {#2}
-        \chaptermark { \text_uppercase:n \abstractname }
-      }
+      { \chapter { \text_uppercase:n \abstractname } }
+      { \chapter [ \text_uppercase:n \abstractname ] {#2} }
   }
   {
     \tex_vfill:D
@@ -2464,6 +2479,19 @@
 % \subsection{交叉引用 Cross referencing}
 % \subsubsection{目录等 Table of contents, etc.}
 % \paragraph{目录 Table of contents}
+% \begin{macro}{\tableofcontents}
+%    简化不必要的判断，且改用 \cs{chapter}，以便进入 PDF 书签。
+%    \begin{macrocode}
+\RenewDocumentCommand \tableofcontents { }
+  {
+    \chapter { \contentsname }
+    \@starttoc { toc }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+%    下面定义格式。
+%
 %    折行标题右侧留三个汉字距离。
 %    \begin{macrocode}
 \contentsmargin [ 3\ccwd ] { \c_zero_dim }
@@ -2505,6 +2533,22 @@
 % \end{macro}
 %
 % \paragraph{插图和表格清单 Lists of figures and tables}
+% \begin{macro}{\listoffigures, \listoftables}
+%    类似 \cs{tableofcontents}。
+%    \begin{macrocode}
+\RenewDocumentCommand \listoffigures { }
+  {
+    \chapter { \listfigurename }
+    \@starttoc { lof }
+  }
+\RenewDocumentCommand \listoftables { }
+  {
+    \chapter { \listtablename }
+    \@starttoc { lot }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
 %    顶格，其他格式类似目录的 section 层。
 %    \begin{macrocode}
 \titlecontents { figure } [ \c_zero_dim ] { }
@@ -2743,6 +2787,15 @@
 % \subsection{本地化 Localization}
 %    大多数本地化通过 \pkg{babel} 自动完成。
 %
+%    防止 \pkg{hyperref} 抱怨这两个宏不能用在 PDF 书签中。
+%    \begin{macrocode}
+\pdfstringdefDisableCommands
+  {
+    \cs_set_eq:NN \bbl@ensure@chinese \prg_do_nothing:
+    \cs_set_eq:NN \bbl@ensure@korean  \prg_do_nothing:
+  }
+%    \end{macrocode}
+%
 % \subsubsection{繁体中文 Traditional Chinese}
 %    \begin{macrocode}
 \bool_if:NT \l_@@_traditional_chinese_bool
@@ -2806,9 +2859,11 @@
 %    \end{macrocode}
 %
 % \subsection{初始化 Initialization}
-%    毕业或学位论文插入偶数页页眉。
+%    毕业或学位论文插入偶数页页眉。初始化页码格式为小写罗马数字，避免封面与版权声明的页码和正
+%    文或是摘要页重复。
 %    \begin{macrocode}
 \pagestyle { pkuthss }
+\pagenumbering { roman }
 \str_if_eq:VnF \l_@@_thesis_type_str { postdoc }
   {
     \exp_args:Nne \mark_insert:nn { pkuthss-thesis-type }
