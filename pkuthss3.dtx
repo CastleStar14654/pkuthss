@@ -150,14 +150,23 @@
 \tl_new:N    \l_@@_tmpc_tl
 \clist_new:N \l_@@_tmpa_clist
 \bool_new:N  \l_@@_tmpa_bool
+\int_new:N   \l_@@_tmpa_int
 %    \end{macrocode}
 % \end{macro}
 %
-% \begin{macro}{\l_@@_word_grid_size_dim}
-%    选项用到的变量。
+% \begin{macro}[int]{\l@pkuthss@tmpa@int}
+%    别名，用于目录。
+%    \begin{macrocode}
+\cs_set_eq:NN \l@pkuthss@tmpa@int \l_@@_tmpa_int
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[int]{\l_@@_word_grid_size_dim,\l_@@_appendix_tocdepth_int,\l@pkuthss@appendix@tocdepth@int}
+%    选项用到的变量（及别名）。
 %    \begin{macrocode}
 \dim_new:N \l_@@_word_grid_size_dim
 \int_new:N \l_@@_appendix_tocdepth_int
+\cs_set_eq:NN \l@pkuthss@appendix@tocdepth@int \l_@@_appendix_tocdepth_int
 %    \end{macrocode}
 % \end{macro}
 %
@@ -2109,10 +2118,8 @@
       {
         \tl_to_str:n
           {
-            \ExplSyntaxOn
-            \int_set_eq:Nc \l_tmpa_int { c@tocdepth }
-            \int_set:cn { c@tocdepth } { -1 }
-            \ExplSyntaxOff
+            \l@pkuthss@tmpa@int = \c@tocdepth
+            \setcounter { tocdepth } { -1 }
           }
       }
   }
@@ -2126,12 +2133,7 @@
   {
     \exp_args:Nne \addtocontents { toc }
       {
-        \tl_to_str:n
-          {
-            \ExplSyntaxOn
-            \int_set_eq:cN { c@tocdepth } \l_tmpa_int
-            \ExplSyntaxOff
-          }
+        \tl_to_str:n { \setcounter { tocdepth } { \l@pkuthss@tmpa@int } }
       }
   }
 %    \end{macrocode}
@@ -2392,11 +2394,7 @@
     \exp_args:Nne \addtocontents { toc }
       {
         \tl_to_str:n
-          {
-            \ExplSyntaxOn
-            \int_set_eq:cN { c@tocdepth } \l_@@_appendix_tocdepth_int
-            \ExplSyntaxOff
-          }
+          { \setcounter { tocdepth } { \l@pkuthss@appendix@tocdepth@int } }
       }
 %    \end{macrocode}
 %    避免附录中的图表被计入清单。
@@ -2406,14 +2404,7 @@
         \clist_map_inline:nn { lof, lot }
           {
             \exp_args:Nne \addtocontents { #1 }
-              {
-                \tl_to_str:n
-                  {
-                    \ExplSyntaxOn
-                    \cs_set_eq:NN \contentsline \use_none:nnnn
-                    \ExplSyntaxOff
-                  }
-              }
+              { \tl_to_str:n { \let \contentsline \@gobblefour } }
           }
       }
   }
