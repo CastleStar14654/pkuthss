@@ -479,7 +479,7 @@
     \bool_if:NTF \l_@@_author_year_bool
       { \PassOptionsToPackage { style = gb7714-2015ay } { biblatex } }
       { \PassOptionsToPackage { style = gb7714-2015 }   { biblatex } }
-    \RequirePackage [ natbib = true ] { biblatex }
+    \RequirePackage [ natbib = true, defernumbers = true ] { biblatex }
   }
 %    \end{macrocode}
 %
@@ -2407,6 +2407,46 @@
 %
 %    附录中参考文献单独排序的实现在 \S\ref{sssec:bibliography} 中给出。
 %
+% \subsubsection{发表成果列表 Publishments}
+% \begin{macro}{\publications, \pkuthss_publication_list:nn}
+%    两个参数：\cs{printbibliography} 的选项和 bib 数据库文件名。
+%    \begin{macrocode}
+\bool_if:NT \l_@@_biblatex_load_bool
+  {
+    \NewDocumentCommand \publications { O{} m }
+      {
+        \pkuthss_publication_list:nn {#1} {#2}
+      }
+    \cs_new:Nn \pkuthss_publication_list:nn
+      {
+        \begin{refsection} [#2]
+          \newrefcontext [sorting = none]
+          \bool_if:NT \l_@@_author_year_bool { \setaligngbstyle }
+          \DeclarePrintbibliographyDefaults { heading = none }
+          \nocite{*}
+          \@@_printbibliography:w [#1]
+        \end{refsection}
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\setaligngbstyle}
+%    存在多次使用 \cs{setaligngbstyle} 的可能，但其内部定义会使用 \cs{newlength}，导致
+%    不能重复调用。这里添加钩子，使其在重复调用时不新定义长度寄存器。
+%    \begin{macrocode}
+\hook_gput_code:nnn { cmd / setaligngbstyle / before } { newlength }
+  {
+    \tl_set_eq:NN \l_tmpa_tl \newlength
+    \cs_set:Npn \newlength #1 { \skip_if_exist:NF #1 { \skip_new:N #1 } }
+  }
+\hook_gput_code:nnn { cmd / setaligngbstyle / after } { newlength }
+  {
+    \tl_set_eq:NN \newlength \l_tmpa_tl
+  }
+%    \end{macrocode}
+% \end{macro}
+%
 % \subsubsection{浮动体 Floats}
 %    仅定义格式要求的图名/表名样式。在 \S\ref{sssec:page_layout} 已经使浮动体与周围文字
 %    间距为 12bp，这里只需设置 caption 与图/表间距为 6bp。
@@ -2510,15 +2550,16 @@
         \dim_set:Nn \bibhang { 2\ccwd }
       }
 %    \end{macrocode}
-%    顺序编码时的缩进格式，设置为序号外挂。
+%    顺序编码时的缩进格式，设置为序号外挂。顺序编码的标签间距全局设置，因为发表文章列表可能使
+%    用数字编号。
 %    \begin{macrocode}
       {
         \ExecuteBibliographyOptions
           {
             gbalign = gb7714,
           }
-        \dim_set:Nn \biblabelsep { 0.5em }
       }
+    \dim_set:Nn \biblabelsep { 0.5em }
 %    \end{macrocode}
 %    通用设置。样例中未要求西文作者姓大写，因此保留输入的大小写格式。
 %    \begin{macrocode}
@@ -2548,6 +2589,7 @@
 %    \begin{macrocode}
     \hook_gput_code:nnn { cmd / appendix / after } { bib-per-appendix }
       {
+        \cs_set_eq:NN \@@_printbibliography:w \printbibliography
         \bool_if:NTF \l_@@_bib_per_appendix_bool
           {
             \DeclarePrintbibliographyDefaults { heading = subbibintoc }
@@ -2565,6 +2607,28 @@
 %    \begin{macrocode}
           {
             \cs_set_eq:NN \printbibliography \prg_do_nothing:
+          }
+      }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\backmatter}
+%    在 \cs{backmatter} 中，撤销在 \cs{appendix} 中加的钩子，结束 \cs{refsection}，并
+%    恢复 \cs{printbibliography} 的定义。
+%    \begin{macrocode}
+    \hook_gput_code:nnn { cmd / backmatter / after } { bib-per-appendix }
+      {
+        \bool_if:NTF \l_@@_bib_per_appendix_bool
+          {
+            \DeclarePrintbibliographyDefaults { heading = bibliography }
+            \endrefsection
+            \endrefcontext
+            \hook_gremove_code:nn
+              { cmd / @chapter / after } { bib-per-appendix }
+            \cs_set:Npn \mkgbnumlabel #1 { \mkbibbrackets {#1} }
+          }
+          {
+            \cs_set_eq:NN \printbibliography \@@_printbibliography:w
           }
       }
 %    \end{macrocode}
