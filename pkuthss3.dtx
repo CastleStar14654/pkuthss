@@ -157,6 +157,7 @@
 %    选项用到的变量。
 %    \begin{macrocode}
 \dim_new:N \l_@@_word_grid_size_dim
+\int_new:N \l_@@_appendix_tocdepth_int
 %    \end{macrocode}
 % \end{macro}
 %
@@ -384,6 +385,23 @@
     bib-per-appendix .bool_set:N = \l_@@_bib_per_appendix_bool,
     bib-per-appendix .initial:n  = false,
     bib-per-appendix .default:n  = true,
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{appendix-tocdepth}
+%    附录在目录中显示的层级。
+%    \begin{macrocode}
+    appendix-tocdepth .int_set:N = \l_@@_appendix_tocdepth_int,
+    appendix-tocdepth .initial:n = 0,
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{appendix-in-loft}
+%    附录图表是否在插图/表格清单中显示。
+%    \begin{macrocode}
+    appendix-in-loft .bool_set:N = \l_@@_appendix_in_loft_bool,
+    appendix-in-loft .initial:n  = false,
+    appendix-in-loft .default:n  = true,
 %    \end{macrocode}
 % \end{macro}
 %
@@ -2350,6 +2368,45 @@
 %    \end{macrocode}
 % \end{environment}
 %
+% \subsubsection{附录 Appendix}
+% \begin{macro}{\appendix}
+%    实现附录在目录中显示层级与其他部分不同。这不会改变 PDF 书签中的层级。
+%    \begin{macrocode}
+\hook_gput_code:nnn { cmd / appendix / after } { tocdepth }
+  {
+    \exp_args:Nne \addtocontents { toc }
+      {
+        \tl_to_str:n
+          {
+            \ExplSyntaxOn
+            \int_set_eq:cN { c@tocdepth } \l_@@_appendix_tocdepth_int
+            \ExplSyntaxOff
+          }
+      }
+%    \end{macrocode}
+%    避免附录中的图表被计入清单。
+%    \begin{macrocode}
+    \bool_if:NF \l_@@_appendix_in_loft_bool
+      {
+        \clist_map_inline:nn { lof, lot }
+          {
+            \exp_args:Nne \addtocontents { #1 }
+              {
+                \tl_to_str:n
+                  {
+                    \ExplSyntaxOn
+                    \cs_set_eq:NN \contentsline \use_none:nnnn
+                    \ExplSyntaxOff
+                  }
+              }
+          }
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+%    附录中参考文献单独排序的实现在 \S\ref{sssec:bibliography} 中给出。
+%
 % \subsubsection{浮动体 Floats}
 %    仅定义格式要求的图名/表名样式。在 \S\ref{sssec:page_layout} 已经使浮动体与周围文字
 %    间距为 12bp，这里只需设置 caption 与图/表间距为 6bp。
@@ -2433,6 +2490,7 @@
 %    \end{macrocode}
 %
 % \subsubsection{参考文献 Bibliography}
+% \label{sssec:bibliography}
 %    格式设置。临时将字号更改为参考文献表的字号，以使得字符宽度正确。
 %    \begin{macrocode}
 \bool_if:NT \l_@@_biblatex_load_bool
