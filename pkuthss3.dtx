@@ -206,6 +206,10 @@
     Option~`\l_keys_key_tl'~has~been~set~by~pkuthss.\\
     User-provided~value~is~ignored.
   }
+\msg_new:nnn { pkuthss } { etoolbox-patch-failed }
+  {
+    Pacthing~failed~when~\token_to_str:N #1 macro~\token_to_str:N #2.
+  }
 %    \end{macrocode}
 %
 % \subsection{选项定义 Defining options}
@@ -377,6 +381,17 @@
           { \fp_eval:n \l_tmpa_fp bp }
       },
     word-grid-size .initial:n = 15.6,
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{word-section-space, \l_@@_word_section_space_bool}
+%    节及以下的标题（记为 A），若下方紧挨低一级的标题（记为 B），两者竖直间距是类似 MS Word
+%    那样取 A 的段后间距与 B 的段前间距中的较大者，还是维持 \LaTeX{} 的默认行为，取 A 的
+%    段后间距。
+%    \begin{macrocode}
+    word-section-space .bool_set:N = \l_@@_word_section_space_bool,
+    word-section-space .initial:n  = false,
+    word-section-space .default:n  = true,
 %    \end{macrocode}
 % \end{macro}
 %
@@ -2217,6 +2232,35 @@
     secnumdepth = 3
   }
 %    \end{macrocode}
+%
+% \begin{macro}[int]{\@startsection}
+%    若用户要求，模拟 MS Word 对紧邻的节标题间竖直间距的行为。
+%    \begin{macrocode}
+\AtBeginDocument
+  {
+    \bool_if:NT \l_@@_word_section_space_bool
+      {
+        \bool_set_false:N \l_@_tmpa_bool
+        \patchcmd \@startsection
+          { \everypar{} \else }
+          { \everypar{} \fi }
+          {
+            \patchcmd \@startsection
+              { \addvspace \CTEX@headingskip \fi }
+              { \addvspace \CTEX@headingskip }
+              { }
+              { \bool_set_true:N \l_@_tmpa_bool }
+          }
+          { \bool_set_true:N \l_@_tmpa_bool }
+        \bool_if:NT \l_@_tmpa_bool
+          {
+            \msg_warning:nnnn { pkuthss } { etoolbox-patch-failed }
+              { \patchcmd } { \@startsection }
+          }
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
 %
 % \subsubsection{列表 Lists}
 % \paragraph{一般列表参数 General list parameters}
