@@ -2118,26 +2118,37 @@
   { \pagenumbering{Roman} }
 %    \end{macrocode}
 %    且章一级不出现在目录。
+%
+%    由于 \cs{maketitle} 结尾使用了 \cs{cleardoublepage}，在调用
+%    \cs{frontmatter} 时已经位于新奇数页了，导致 \cs{frontmatter} 内的
+%    \cs{cleardoublepage} 无效。如果直接使用 \cs{addtocontents}，\cs{@auxout} 会在为
+%    本页结束后才被写入，导致中文摘要进入目录。因此，需要使用包装过的、立即生效的
+%    \cs{@@_addtocontents_now:nn}。为预防 \cs{frontmatter} 被调用多次的情况，仅加一次
+%    性的钩子。
+%
+%    在命令之后加钩子，因为实时写入 aux 文件对应需要已经位于新空白页。
 %    \begin{macrocode}
-\hook_gput_code:nnn { cmd / frontmatter / after } { toc-depth }
-  {
-    \exp_args:Nne \addtocontents { toc }
-      {
-        \tl_to_str:n
-          {
-            \bgroup
-              \c@tocdepth = -1
-          }
-      }
-  }
+\hook_gput_next_code:nn { cmd / frontmatter / after }
+  { \@@_addtocontents_now:nn { toc } { \bgroup \c@tocdepth = -1 } }
 %    \end{macrocode}
 % \end{macro}
 %
 % \begin{macro}{\mainmatter}
-%    正文开始，结束分组，开始记录目录。
+%    正文开始，结束分组，开始记录目录。同理，为一次性钩子。
 %    \begin{macrocode}
-\hook_gput_code:nnn { cmd / mainmatter / after } { toc-depth }
-  { \exp_args:Nne \addtocontents { toc } { \egroup } }
+\hook_gput_next_code:nn { cmd / mainmatter / after }
+  { \@@_addtocontents_now:nn { toc } { \egroup } }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_addtocontents_now:nn}
+%    实时的 \cs{addtocontents}。仅能用于临时改变 tocdepth。
+%    \begin{macrocode}
+\cs_new:Nn \@@_addtocontents_now:nn
+  {
+    \iow_now:Ne \@auxout
+      { \tl_to_str:n { \@writefile {#1} {#2} } }
+  }
 %    \end{macrocode}
 % \end{macro}
 %
@@ -2422,8 +2433,8 @@
 %    \begin{macrocode}
 \hook_gput_code:nnn { cmd / appendix / after } { tocdepth }
   {
-    \exp_args:Nne \addtocontents { toc }
-      { \tl_to_str:n { \c@tocdepth \l@pkuthss@appendix@tocdepth@int } }
+    \@@_addtocontents_now:nn { toc }
+      { \c@tocdepth = \l@pkuthss@appendix@tocdepth@int }
 %    \end{macrocode}
 %    避免附录中的图表被计入清单。
 %    \begin{macrocode}
@@ -2431,8 +2442,8 @@
       {
         \clist_map_inline:nn { lof, lot }
           {
-            \exp_args:Nne \addtocontents { #1 }
-              { \tl_to_str:n { \let \contentsline \@gobblefour } }
+            \@@_addtocontents_now:nn { #1 }
+              { \let \contentsline \@gobblefour }
           }
       }
   }
