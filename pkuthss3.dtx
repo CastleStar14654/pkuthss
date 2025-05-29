@@ -328,7 +328,7 @@
 %    \end{macrocode}
 % \end{macro}
 %
-% \begin{macro}{footmisc}
+% \begin{macro}{footmisc, \l_@@_footmisc_option_clist}
 %    \begin{macrocode}
     footmisc .clist_set:N      = \l_@@_footmisc_option_clist,
     footmisc .initial:n        = { perpage, bottom, belowfloats },
@@ -1263,7 +1263,7 @@
 % \end{macro}
 %
 % \begin{macro}[int]{\footins}
-%    \cmd{\skip\footins} 设置为 11bp 的 Times New Roman 的无网格单倍行距。
+%    \cmd{\skip}\cmd{\footins} 设置为 11bp 的 Times New Roman 的无网格单倍行距。
 %    \begin{macrocode}
 \dim_set:Nn \l_tmpa_dim  { 11bp }
 \dim_set:Nn { \skip\footins }
@@ -2240,7 +2240,7 @@
   {
     \bool_if:NT \l_@@_word_section_space_bool
       {
-        \bool_set_false:N \l_@_tmpa_bool
+        \bool_set_false:N \l_@@_tmpa_bool
         \patchcmd \@startsection
           { \everypar{} \else }
           { \everypar{} \fi }
@@ -2249,10 +2249,10 @@
               { \addvspace \CTEX@headingskip \fi }
               { \addvspace \CTEX@headingskip }
               { }
-              { \bool_set_true:N \l_@_tmpa_bool }
+              { \bool_set_true:N \l_@@_tmpa_bool }
           }
-          { \bool_set_true:N \l_@_tmpa_bool }
-        \bool_if:NT \l_@_tmpa_bool
+          { \bool_set_true:N \l_@@_tmpa_bool }
+        \bool_if:NT \l_@@_tmpa_bool
           {
             \msg_warning:nnnn { pkuthss } { etoolbox-patch-failed }
               { \patchcmd } { \@startsection }
@@ -2471,12 +2471,12 @@
 %    \begin{macrocode}
 \hook_gput_code:nnn { cmd / setaligngbstyle / before } { newlength }
   {
-    \tl_set_eq:NN \l_tmpa_tl \newlength
+    \tl_set_eq:NN \l_@@_tmpa_tl \newlength
     \cs_set:Npn \newlength #1 { \skip_if_exist:NF #1 { \skip_new:N #1 } }
   }
 \hook_gput_code:nnn { cmd / setaligngbstyle / after } { newlength }
   {
-    \tl_set_eq:NN \newlength \l_tmpa_tl
+    \tl_set_eq:NN \newlength \l_@@_tmpa_tl
   }
 %    \end{macrocode}
 % \end{macro}
@@ -2891,10 +2891,6 @@
           { \l_@@_thesis_type_str -header }
       }
   }
-%    \end{macrocode}
-%
-%    \begin{macrocode}
-\AtBeginDocument { \selectlanguage { \l_@@_main_language_tl } }
 %    \end{macrocode}
 %
 %    \begin{macrocode}
