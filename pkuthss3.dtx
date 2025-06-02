@@ -488,6 +488,7 @@
 \RequirePackage { tikz }
 \RequirePackage { xcolor }
 \RequirePackage { titletoc }
+\RequirePackage { pdfpages }
 \RequirePackage { unicode-math }
 \RequirePackage [ bookmarksnumbered ] { hyperref }
 \bool_if:NT \l_@@_biblatex_load_bool
@@ -1988,6 +1989,7 @@
 % \end{templateinstancedecl}
 %
 % \subsubsection{声明 Declarations}
+% \paragraph{版权声明 The copyright declaration}
 % \begin{macro}{\@@_copyright_declaration:}
 %    定义简繁体两个版本的版权声明。
 %    \begin{macrocode}
@@ -2021,7 +2023,120 @@
 %    \end{macrocode}
 % \end{macro}
 %
-% \begin{macro}{\@@_original_usage_statement:n, \statement}
+% \paragraph{通用扫描页模板 General scanned page template}
+% \begin{templatedecl}{scanned-page}
+%    扫描页模板声明。
+%    \begin{macrocode}
+\NewTemplateType { scanned-page } { 0 }
+%    \end{macrocode}
+% \end{templatedecl}
+%
+% \begin{templateinterfacedecl}{scanned-page/basic}
+%    \opt{typeset-function} 仅排版章标题以外的内容，且不包括二维码。\opt{chapter-name}
+%    与 \opt{toc-name} 分别是在正文（以及页眉）和目录（以及 PDF 书签）中显示的章一级标题名
+%    称。\opt{header-footer}、\opt{in-toc}、\opt{typeset} 决定是否排版页眉页脚、
+%    是否加入目录以及 PDF 书签、是否排版页眉页脚之外的部分。\opt{file} 与 \opt{pages} 为
+%    插入扫描页的文件名以及在文件中的页码。给定 \opt{file} 时，\opt{typeset} 选项无效。
+%    \begin{macrocode}
+\DeclareTemplateInterface { scanned-page } { basic } { 0 }
+  {
+    typeset-function : function{0},
+    chapter-name     : tokenlist,
+    toc-name         : tokenlist = \KeyValue { chapter-name },
+    header-footer    : boolean   = false,
+    in-toc           : boolean   = true,
+    typeset          : boolean   = true,
+    file             : tokenlist = ,
+    pages            : tokenlist = 1
+  }
+\DeclareTemplateCode { scanned-page } { basic } { 0 }
+  {
+    typeset-function = \@@_scanned_page_typeset:,
+    chapter-name     = \l_@@_scanned_page_chap_name_tl,
+    toc-name         = \l_@@_scanned_page_toc_name_tl,
+    header-footer    = \l_@@_scanned_page_hdft_bool,
+    in-toc           = \l_@@_scanned_page_in_toc_bool,
+    typeset          = \l_tmpb_bool,
+    file             = \l_@@_tmpb_tl,
+    pages            = \l_@@_tmpc_tl,
+  }
+  {
+%    \end{macrocode}
+%    根据文档类选项，设置是否从奇数页开始。\cs{cleardoublepage} 不能在 \opt{pagecommand}
+%    中给出（会无效）。
+%    \begin{macrocode}
+    \legacy_if:nTF { @openright }
+      { \cleardoublepage } { \clearpage }
+    \tl_if_empty:NTF \l_@@_tmpb_tl
+      {
+        \bool_if:NTF \l_tmpb_bool
+          {
+            \bool_if:NTF \l_@@_scanned_page_in_toc_bool
+              {
+                \chapter [ \l_@@_scanned_page_toc_name_tl ]
+                  { \l_@@_scanned_page_chap_name_tl }
+              }
+              { \chapter* { \l_@@_scanned_page_chap_name_tl } }
+            \bool_if:NTF \l_@@_scanned_page_hdft_bool
+              { \thispagestyle{pkuthss} } { \thispagestyle{empty} }
+            \chaptermark { \l_@@_scanned_page_chap_name_tl }
+            \@@_scanned_page_typeset:
+          }
+          {
+            \@@_scanned_page_aux:
+            \mode_leave_vertical:
+          }
+      }
+      {
+        \includepdf
+          [
+            pages = \l_@@_tmpc_tl,
+            pagecommand = { \@@_scanned_page_aux: }
+          ]
+          { \l_@@_tmpb_tl }
+      }
+  }
+%    \end{macrocode}
+% \end{templateinterfacedecl}
+%
+% \begin{macro}{\@@_scanned_page_aux:}
+%    辅助函数，用于为插入的扫描页添加页眉以及目录项。
+%    \begin{macrocode}
+\cs_new:Nn \@@_scanned_page_aux:
+  {
+    \bool_if:NTF \l_@@_scanned_page_hdft_bool
+      { \thispagestyle{pkuthss} } { \thispagestyle{empty} }
+    \chaptermark{ \l_@@_scanned_page_chap_name_tl }
+    \bool_if:NT \l_@@_scanned_page_in_toc_bool
+      {
+        \phantomsection
+        \addcontentsline { toc } { chapter }
+          { \l_@@_scanned_page_toc_name_tl }
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \paragraph{原创性声明和使用授权说明 The statement of originality and authorization of use}
+% \begin{macro}{\statement}
+%    用户函数。第一个可选参数为扫描页参数，第二个可选参数为保密期限。
+%    \begin{macrocode}
+\NewDocumentCommand \statement { O{} O{0} }
+  {
+    \@@_original_usage_statement_aux:
+    \int_set:Nn \l_tmpa_int {#2}
+    \UseTemplate { scanned-page } { basic }
+      {
+        typeset-function = \@@_original_usage_statement:n \l_tmpa_int,
+        chapter-name     = \l_tmpa_tl,
+        toc-name         = \l_tmpb_tl,
+        #1
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_original_usage_statement:n}
 %    参数为保密期限。
 %
 %    博后报告与学位论文的原创性声明和使用授权说明有微妙区别，通过一些临时的 token list 或是
@@ -2034,26 +2149,13 @@
       \ctexset{ section / format += \centering }
       \str_if_eq:VnTF \l_@@_thesis_type_str { postdoc }
         {
-          \tl_set:Nn \l_@@_tmpa_tl { 博士后研究报告 }
-          \tl_set:Nn \l_@@_tmpb_tl { 博士後研究報告 }
           \tl_set:Nn \l_@@_tmpc_tl { 报告 }
           \cs_set_eq:NN \@@_thesis_postdoc:nn \use_ii:nn
         }
         {
-          \tl_set:Nn \l_@@_tmpa_tl { 学位论文 }
-          \tl_set:Nn \l_@@_tmpb_tl { 學位論文 }
           \tl_set:Nn \l_@@_tmpc_tl { 论文 }
           \cs_set_eq:NN \@@_thesis_postdoc:nn \use_i:nn
         }
-      \tl_set:Ne \l_tmpa_tl
-        { 北京大学 \l_@@_tmpa_tl 原创性声明和使用授权说明 }
-      \bool_if:NTF \l_@@_traditional_chinese_bool
-        {
-          \tl_set:Ne \l_tmpb_tl
-            { 北京大學 \l_@@_tmpb_tl 原創性聲明和使用授權說明 }
-        }
-        { \tl_set_eq:NN \l_tmpb_tl \l_tmpa_tl }
-      \chapter [ \l_tmpb_tl ] { \l_tmpa_tl }
       \section*{原创性声明}
       本人郑重声明：所呈交的 \l_@@_tmpa_tl ，是本人在
       \@@_thesis_postdoc:nn {} { 合作 } 导师的指导下，
@@ -2105,7 +2207,33 @@
         日期： \skip_horizontal:n { 3.5em } 年
         \skip_horizontal:n { 1.5em } 月 \skip_horizontal:n { 1.5em } 日
       \end{center}
-    \end { selectlanguage }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_original_usage_statement_aux:}
+%    辅助函数，将原创性声明的在正文以及目录中的标题保存至 \cs{l_tmpa_tl} 与
+%    \cs{l_tmpb_tl} 中。
+%    \begin{macrocode}
+\cs_new:Nn \@@_original_usage_statement_aux:
+  {
+    \str_if_eq:VnTF \l_@@_thesis_type_str { postdoc }
+      {
+        \tl_set:Nn \l_@@_tmpa_tl { 博士后研究报告 }
+        \tl_set:Nn \l_@@_tmpb_tl { 博士後研究報告 }
+      }
+      {
+        \tl_set:Nn \l_@@_tmpa_tl { 学位论文 }
+        \tl_set:Nn \l_@@_tmpb_tl { 學位論文 }
+      }
+    \tl_set:Ne \l_tmpa_tl
+      { 北京大学 \l_@@_tmpa_tl 原创性声明和使用授权说明 }
+    \bool_if:NTF \l_@@_traditional_chinese_bool
+      {
+        \tl_set:Ne \l_tmpb_tl
+          { 北京大學 \l_@@_tmpb_tl 原創性聲明和使用授權說明 }
+      }
+      { \tl_set_eq:NN \l_tmpb_tl \l_tmpa_tl }
   }
 %    \end{macrocode}
 % \end{macro}
