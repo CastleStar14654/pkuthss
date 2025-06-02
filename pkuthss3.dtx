@@ -2386,7 +2386,12 @@
 %    \begin{macrocode}
 \NewDocumentEnvironment { cabstract } { m }
   {
-    \begin{abstract} [ chinese ] { 关键词： } [ ， ] {#1}
+    \begin{abstract} [ chinese ]
+      {
+        \bool_if:NTF \l_@@_traditional_chinese_bool
+          { 關鍵詞： } { 关键词： }
+      }
+      [ ， ] {#1}
   }
   {
     \end{abstract}
@@ -2830,13 +2835,16 @@
 %    \begin{macrocode}
 \bool_if:NT \l_@@_traditional_chinese_bool
   {
-    \setlocalecaption { chinese } { ref }        { 參考文獻 }
-    \setlocalecaption { chinese } { bib }        { 參考文獻 }
-    \setlocalecaption { chinese } { appendix }   { 附錄 }
-    \setlocalecaption { chinese } { contents }   { 目錄 }
-    \setlocalecaption { chinese } { listfigure } { 插圖 }
-    \setlocalecaption { chinese } { figure }     { 圖 }
-    \setlocalecaption { chinese } { proof }      { 證明 }
+    \AtBeginDocument
+      {
+        \setlocalecaption { chinese } { ref }        { 參考文獻 }
+        \setlocalecaption { chinese } { bib }        { 參考文獻 }
+        \setlocalecaption { chinese } { appendix }   { 附錄 }
+        \setlocalecaption { chinese } { contents }   { 目錄 }
+        \setlocalecaption { chinese } { listfigure } { 插圖 }
+        \setlocalecaption { chinese } { figure }     { 圖 }
+        \setlocalecaption { chinese } { proof }      { 證明 }
+      }
   }
 %    \end{macrocode}
 %
