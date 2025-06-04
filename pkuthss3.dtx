@@ -2249,6 +2249,102 @@
 %    \end{macrocode}
 % \end{macro}
 %
+% \paragraph{学位论文答辩委员会名单 Thesis defense committee}
+% \begin{macro}{\committee, \@@_defense_committee:n}
+%    提供排版生成与导入学校系统版本两种选项。
+%
+%    可选参数 1 为页面设置。
+%
+%    可选参数 2 为委员会名单，用于排版生成。需为一系列 clist，不同委员用逗号隔开；同时，单个
+%    委员信息也为 clist，姓名、职称、专业、单位用逗号隔开。第一个委员自动是主席。
+%    \begin{macrocode}
+\NewDocumentCommand \committee { O{} O{} }
+  {
+    \@@_set_simp_trad_chinese_tl:nn
+      { 学位论文答辩委员会名单 } { 學位論文答辯委員會名單 }
+    \UseTemplate { scanned-page } { basic }
+      {
+        typeset-function = \@@_defense_committee:n {#2},
+        chapter-name     = \l_tmpa_tl,
+        toc-name         = \l_tmpb_tl,
+        #1
+      }
+  }
+\cs_new:Nn \@@_defense_committee:n
+  {
+%    \end{macrocode}
+%    事先将主席的信息单独保存至 \cs{l_@@_tmpa_tl}，以 \verb|&| 分隔；将委员人数存至
+%    \cs{l_tmpa_int}，信息存至 \cs{l_@@_tmpa_clist}，内层的 clist 转换为以 \verb|&|
+%    分隔。
+%    \begin{macrocode}
+    \clist_set:Nn \l_tmpa_clist {#1}
+    \clist_pop:NN \l_tmpa_clist \l_tmpa_tl
+    \tl_set:Ne \l_@@_tmpa_tl
+      { \exp_args:NV \clist_use:nn \l_tmpa_tl { & } }
+    \clist_clear:N \l_@@_tmpa_clist
+    \int_zero:N \l_tmpa_int
+    \clist_map_inline:Nn \l_tmpa_clist
+      {
+        \clist_put_right:Ne \l_@@_tmpa_clist
+          {
+            { \clist_use:nn {##1} { & } }
+          }
+        \int_incr:N \l_tmpa_int
+      }
+%    \end{macrocode}
+%    设置居中，字号为 11bp；稍微调大行距来增加表格横线上下的间距，但同时使用
+%    \cs{linespread} 来减小单元格内换行时的行距。
+%    \begin{macrocode}
+    \begin { center }
+      \@@_setfontsize:Nnnn \l_tmpa_tl { 11bp } { } { 1.5 }
+      \tl_set:Nn \l_@@_tmpb_tl
+        { \linespread{0.7}\selectfont \centering\arraybackslash }
+      \dim_set:Nn \tabcolsep { 3.5bp }
+      \begin { tabular }
+        {
+          | > { \sffamily\l_@@_tmpb_tl } m { 7em }
+          | > { \l_@@_tmpb_tl } m { 5em }
+          | > { \l_@@_tmpb_tl } m { 6em }
+          | > { \l_@@_tmpb_tl } m { 8em }
+          | > { \l_@@_tmpb_tl } m { 11em } |
+        }
+        \hline
+%    \end{macrocode}
+%    论文题目一行占两行高宽，允许换行。
+%    \begin{macrocode}
+        \multirow2* { 论文题目 } &
+        \multicolumn4 { l | }
+          {
+            \linespread{0.7}\selectfont
+            \multirow2*
+              {
+                \parbox [c] [ 2\baselineskip ] [c] { 30em + 6\tabcolsep }
+                  { \l_@@_title_chinese_tl }
+              }
+          }
+        \\ & \multicolumn4 { l | } { } \\ \hline
+        作者 & \multicolumn4 { l | } { \l_@@_name_chinese_tl } \\
+        \hline
+        专业 & \multicolumn4 { l | } { \l_@@_major_chinese_tl } \\
+        \hline
+        答辩委员会成员     & \textsf{姓名} & \textsf{专业技术职称} &
+        \textsf{从事专业} & \textsf{工作单位} \\
+        \hline
+        \textrm{主席}    & \l_@@_tmpa_tl \\
+        \hline
+%    \end{macrocode}
+%    委员跨多行。
+%    \begin{macrocode}
+        \multirow { \int_to_arabic:n { \l_tmpa_int } } *
+          { \textrm{委员} } &
+        \clist_use:Nn \l_@@_tmpa_clist { \\ \cline{2-5} & }
+        \\ \hline
+      \end { tabular }
+    \end { center }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
 % \paragraph{博士学位论文答辩委员会决议书 Thesis defense resolution}
 % \begin{macro}{\resolution}
 %    决议书排版较为复杂，直接插入扫描页。
