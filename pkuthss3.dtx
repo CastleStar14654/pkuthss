@@ -2125,10 +2125,9 @@
 \NewDocumentCommand \statement { O{} O{0} }
   {
     \@@_original_usage_statement_aux:
-    \int_set:Nn \l_tmpa_int {#2}
     \UseTemplate { scanned-page } { basic }
       {
-        typeset-function = \@@_original_usage_statement:n \l_tmpa_int,
+        typeset-function = \@@_original_usage_statement:n {#2},
         chapter-name     = \l_tmpa_tl,
         toc-name         = \l_tmpb_tl,
         #1
@@ -2228,14 +2227,82 @@
         \tl_set:Nn \l_@@_tmpa_tl { 学位论文 }
         \tl_set:Nn \l_@@_tmpb_tl { 學位論文 }
       }
-    \tl_set:Ne \l_tmpa_tl
+    \@@_set_simp_trad_chinese_tl:nn
       { 北京大学 \l_@@_tmpa_tl 原创性声明和使用授权说明 }
+      { 北京大學 \l_@@_tmpb_tl 原創性聲明和使用授權說明 }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_set_simp_trad_chinese_tl:nn}
+%    参数为简体/繁体的章标题名称，会根据当前文档的简繁体设置，将应该作为正文中章节标题及页眉
+%    的（永远是简体版本）保存至 \cs{l_tmpa_tl}，将应该作为目录及 PDF 书签内容的保存至
+%    \cs{l_tmpb_tl}。
+%    \begin{macrocode}
+\cs_new:Nn \@@_set_simp_trad_chinese_tl:nn
+  {
+    \tl_set:Ne \l_tmpa_tl {#1}
     \bool_if:NTF \l_@@_traditional_chinese_bool
-      {
-        \tl_set:Ne \l_tmpb_tl
-          { 北京大學 \l_@@_tmpb_tl 原創性聲明和使用授權說明 }
-      }
+      { \tl_set:Ne \l_tmpb_tl {#2} }
       { \tl_set_eq:NN \l_tmpb_tl \l_tmpa_tl }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \paragraph{博士学位论文答辩委员会决议书 Thesis defense resolution}
+% \begin{macro}{\resolution}
+%    决议书排版较为复杂，直接插入扫描页。
+%    \begin{macrocode}
+\NewDocumentCommand \resolution { O{} }
+  {
+    \@@_set_simp_trad_chinese_tl:nn
+      { 北京大学博士学位论文答辩委员会决议书 } { 北京大學博士學位論文答辯委員會決議書 }
+    \UseTemplate { scanned-page } { basic }
+      {
+        typeset-function = \prg_do_nothing:,
+        chapter-name     = \l_tmpa_tl,
+        toc-name         = \l_tmpb_tl,
+        #1
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \paragraph{提交终版学位论文承诺书 Final version declaration}
+% \begin{macro}{\finalversion, \@@_final_version_statement:}
+%    参数为一般扫描页通用参数。
+%    \begin{macrocode}
+\NewDocumentCommand \finalversion { O{} }
+  {
+    \@@_set_simp_trad_chinese_tl:nn
+      { 提交终版学位论文承诺书 } { 提交終版學位論文承諾書 }
+    \UseTemplate { scanned-page } { basic }
+      {
+        typeset-function = \@@_final_version_statement:,
+        chapter-name     = \l_tmpa_tl,
+        toc-name         = \l_tmpb_tl,
+        #1
+      }
+  }
+\cs_new:Nn \@@_final_version_statement:
+  {
+    本人郑重承诺，所呈交的学位论文为最终版学位论文。
+    本人知晓，该版学位论文将用于校学位评定委员会审议学位、国家和北京市学位论文抽检。
+    论文版本呈交错误带来的结果将由本人承担。
+    \begin{flushright}
+      \mode_leave_vertical:
+      \vbox_top:n
+        {
+          \hbox:n { 论文作者签名： \tex_hfil:D }
+          \smallskip
+          \hbox:n
+            {
+              日期： \skip_horizontal:n { 3.5em } 年
+              \skip_horizontal:n { 2em } 月
+              \skip_horizontal:n { 2em } 日
+            }
+        }
+    \end{flushright}
   }
 %    \end{macrocode}
 % \end{macro}
