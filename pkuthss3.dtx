@@ -1307,10 +1307,10 @@
 % \begin{macro}[int]{\floatsep, \textfloatsep, \intextsep, \@fpsep}
 %    浮动体竖直间距统一设置为 12bp。
 %    \begin{macrocode}
-\dim_set:Nn \floatsep     { 12bp plus 2bp minus 2bp }
-\dim_set:Nn \textfloatsep { 12bp plus 2bp minus 2bp }
-\dim_set:Nn \intextsep    { 12bp plus 2bp minus 2bp }
-\dim_set:Nn \@fpsep       { 12bp plus 2fil}
+\skip_set:Nn \floatsep     { 12bp plus 2bp minus 2bp }
+\skip_set:Nn \textfloatsep { 12bp plus 2bp minus 2bp }
+\skip_set:Nn \intextsep    { 12bp plus 2bp minus 2bp }
+\skip_set:Nn \@fpsep       { 12bp plus 2fil}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -2613,7 +2613,7 @@
 %    空白恰为正文情况（20bp${}-{}$12bp）的两倍。若前方分段，则间距再增加 3bp，相当于总共
 %    19bp 的空白。
 %    \begin{macrocode}
-\dim_set:Nn \partopsep { 3bp plus 2bp minus 2bp }
+\skip_set:Nn \partopsep { 3bp plus 2bp minus 2bp }
 \tl_set:cn { @listi }
   {
     \leftmargin\leftmargini
