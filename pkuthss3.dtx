@@ -395,6 +395,32 @@
 %    \end{macrocode}
 % \end{macro}
 %
+% \begin{macro}{float-auto-centering, table-auto-fontsize}
+%    控制是否自动使浮动体环境（如 \env{table} 和 \env{figure}）中的内容居中；是否自动使
+%    浮动体环境中内容的字号符合对表格内容字号的要求（即单倍行距 11bp，或 \cs{small}）。
+%    \begin{macrocode}
+    float-auto-centering .bool_set:N = \l_@@_float_auto_centering_bool,
+    float-auto-centering .initial:n  = true,
+    float-auto-centering .default:n  = true,
+    table-auto-fontsize  .bool_set:N = \l_@@_table_auto_fontsize_bool,
+    table-auto-fontsize  .initial:n  = true,
+    table-auto-fontsize  .default:n  = true,
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{tabular-vsep-scheme}
+%    控制在表格各行上下添加间距的模式。由于 \pkg{booktabs} 尚未导入，仅先记录下用户的选择。
+%    \begin{macrocode}
+    tabular-vsep-scheme .choices:nn =
+      { all, half, rule-only }
+      {
+        \tl_set_eq:NN \l_@@_tabular_vsep_scheme_initial_tl
+          \l_keys_choice_tl
+      },
+    tabular-vsep-scheme .initial:n = half,
+%    \end{macrocode}
+% \end{macro}
+%
 % \begin{macro}{bib-per-appendix, \l_@@_bib_per_appendix_bool}
 %    是否逐附录编制参考文献表。
 %    \begin{macrocode}
@@ -481,7 +507,9 @@
 %    \end{macrocode}
 %
 %    \begin{macrocode}
+\RequirePackage { array }
 \RequirePackage { tabularx, multirow }
+\RequirePackage { booktabs }
 \RequirePackage { caption }
 \RequirePackage [ \l_@@_footmisc_option_clist ] { footmisc }
 \RequirePackage { etoolbox }
@@ -1048,7 +1076,7 @@
 % \end{macro}
 %
 % \begin{macro}{\small}
-%    用于图名和表名，“使用 11bp 字，单倍行距”。
+%    用于图名、表名以及表格内容，“使用 11bp 字，单倍行距”。
 %    \begin{macrocode}
 \RenewDocumentCommand \small { }
   {
@@ -1556,7 +1584,8 @@
 %    \end{macrocode}
 %    尽可能与模板封面一致的参数；将 \cs{lineskip} 设置为 0pt，避免 \LaTeX{} 自动添加间距。
 %    \begin{macrocode}
-      \bool_set_eq:NN \l_@@_word_grid_bool \c_true_bool
+      \bool_set_true:N \l_@@_word_grid_bool
+      \@@_set_tabular_scheme:n { rule-only }
       \tl_set:Nn \arraystretch { 1 }
       \dim_zero:N \parindent
       \dim_set:Nn \tabcolsep { 0.19cm }
@@ -2292,13 +2321,12 @@
         \int_incr:N \l_tmpa_int
       }
 %    \end{macrocode}
-%    设置居中，字号为 11bp；稍微调大行距来增加表格横线上下的间距，但同时使用
-%    \cs{linespread} 来减小单元格内换行时的行距。
+%    格式同正文表格要求，横线上下添加间距。
 %    \begin{macrocode}
     \begin { center }
-      \@@_setfontsize:Nnnn \l_tmpa_tl { 11bp } { } { 1.5 }
-      \tl_set:Nn \l_@@_tmpb_tl
-        { \linespread{0.7}\selectfont \centering\arraybackslash }
+      \small
+      \@@_set_tabular_scheme:n { all }
+      \tl_set:Nn \l_@@_tmpb_tl { \centering\arraybackslash }
       \dim_set:Nn \tabcolsep { 3.5bp }
       \begin { tabular }
         {
@@ -2315,7 +2343,6 @@
         \multirow2* { 论文题目 } &
         \multicolumn4 { l | }
           {
-            \linespread{0.7}\selectfont
             \multirow2*
               {
                 \parbox [c] [ 2\baselineskip ] [c] { 30em + 6\tabcolsep }
@@ -2335,7 +2362,7 @@
 %    \end{macrocode}
 %    委员跨多行。
 %    \begin{macrocode}
-        \multirow { \int_to_arabic:n { \l_tmpa_int } } *
+        \multirow { \int_use:N \l_tmpa_int } *
           { \textrm{委员} } &
         \clist_use:Nn \l_@@_tmpa_clist { \\ \cline{2-5} & }
         \\ \hline
@@ -2790,6 +2817,123 @@
 %    \end{macrocode}
 % \end{macro}
 %
+% \subsubsection{阵列与表格 Array and tabular}
+% \begin{macro}{\c_@@_tabular_vsep_dim, \l_@@_tabular_vsep_dim}
+%    在单元格内容上下添加的间距，要求为 3bp，保存为常量 \cs{c_@@_tabular_vsep_dim}。当前
+%    实际使用的值保存于 \cs{l_@@_tabular_vsep_dim} 中。
+%    \begin{macrocode}
+\dim_const:Nn \c_@@_tabular_vsep_dim { 3bp }
+\dim_new:N    \l_@@_tabular_vsep_dim
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[int]{\l_@@_tabular_vsep_always_bool, tabular-vsep-scheme, \belowrulesep, \aboverulesep}
+%    实际实现 \opt{tabular-vsep-scheme} 的几种配置。表格逐行的上下间距添加在
+%    \cs{@@@@array} 中实现。
+%    \begin{macrocode}
+\@@_define_option:n
+  {
+%    \end{macrocode}
+%    所有行都要添加内容上下的 3bp 间距；\pkg{booktabs} 三线表横线上下相应不需要添加间距。
+%    \begin{macrocode}
+    tabular-vsep-scheme / all .code:n =
+      {
+        \bool_set_true:N \l_@@_tabular_vsep_always_bool
+        \dim_set_eq:NN \l_@@_tabular_vsep_dim \c_@@_tabular_vsep_dim
+        \dim_zero:N \belowrulesep
+        \dim_zero:N \aboverulesep
+      },
+%    \end{macrocode}
+%    无横线的行仅添加一次 3bp 间距；通过使各行上下添加 1.5bp，同时三线表横线上下也添加
+%    1.5bp 来实现。
+%    \begin{macrocode}
+    tabular-vsep-scheme / half .code:n =
+      {
+        \bool_set_true:N \l_@@_tabular_vsep_always_bool
+        \dim_set:Nn \l_@@_tabular_vsep_dim
+          { \c_@@_tabular_vsep_dim / 2 }
+        \dim_set_eq:NN \belowrulesep \l_@@_tabular_vsep_dim
+        \dim_set_eq:NN \aboverulesep \l_@@_tabular_vsep_dim
+      },
+%    \end{macrocode}
+%    仅在三线表横线上下添加 3bp 间距。
+%    \begin{macrocode}
+    tabular-vsep-scheme / rule-only .code:n =
+      {
+        \bool_set_false:N \l_@@_tabular_vsep_always_bool
+        \dim_set_eq:NN \belowrulesep \c_@@_tabular_vsep_dim
+        \dim_set_eq:NN \aboverulesep \c_@@_tabular_vsep_dim
+      }
+  }
+%    \end{macrocode}
+%    若用户使用文档类选项设置了 \opt{tabular-vsep-scheme}，则在此应用设置。
+%    \begin{macrocode}
+\exp_args:Ne \@@_set_option:n
+  { tabular-vsep-scheme = \l_@@_tabular_vsep_scheme_initial_tl }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\pkutabularscheme, \@@_set_tabular_scheme:n}
+%    可在任意位置更改表格竖直间距配置的用户函数。
+%    \begin{macrocode}
+\NewDocumentCommand \pkutabularscheme { m }
+  { \@@_set_tabular_scheme:n {#1} }
+\cs_new:Nn \@@_set_tabular_scheme:n
+  { \@@_set_option:n { tabular-vsep-scheme = #1 } }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[int]{\@@@@array}
+%    \cs{arraystretch} 的原本定义为对 \cs{strutbox} 的高与深同时乘上的系数，从而得到
+%    \cs{@arstrutbox}。由于 \cs{strutbox} 的高度通常比深度大很多，表格中每一行上方间距会
+%    比下方间距相应的长。
+%
+%    格式要求表格内容上下要添加相等的长度 \cs{l_@@_tabular_vsep_dim}，因此在这里利用
+%    \pkg{array} 的 \cs{extrarowheight} 更改 \cs{arraystretch} 的效果。
+%
+%    在 \cs{arraystretch} 等于 1 时，相当于单元格内容上下各添加
+%    \cs{l_@@_tabular_vsep_dim}；在 \cs{arraystretch} 不等于 1 时，
+%    \cs{arraystretch}是单元格内容\textbf{基线以下}部分的伸缩系数，其伸缩的长度对称地添加
+%    到单元格上方（即单元格内容会永远在单元格内上下居中）。
+%
+%    这一功能可以通过更改 \cs{l_@@_tabular_vsep_always_bool} 的值来打开或关闭。
+%    \begin{macrocode}
+\hook_gput_code:nnn { cmd / @@@@array / before } { row-vsep }
+  {
+    \bool_if:NT \l_@@_tabular_vsep_always_bool
+      {
+%    \end{macrocode}
+%    计算原本定义下的 \cs{arraystretch}，保存在 \cs{l_tmpa_fp} 中。
+%    \begin{macrocode}
+        \dim_set:Nn \l_tmpa_dim
+          { \box_dp:N \strutbox + \l_@@_tabular_vsep_dim }
+        \dim_set:Nn \l_tmpa_dim { \arraystretch \l_tmpa_dim }
+        \fp_set:Nn \l_tmpa_fp
+          { \dim_ratio:nn { \l_tmpa_dim } { \box_dp:N \strutbox } }
+        \tl_set:Ne \arraystretch { \fp_use:N \l_tmpa_fp }
+%    \end{macrocode}
+%    计算为了使 \cs{@arstrutbox} 相比于 \cs{strutbox} 在上、下各添加相等长度，需将
+%    \cs{strutbox} 的高度减去多长。
+%    \begin{macrocode}
+        \fp_set:Nn \l_tmpa_fp { - ( 1 - 1/\l_tmpa_fp ) }
+        \dim_set:Nn \extrarowheight
+          { \box_ht:N \strutbox - \box_dp:N \strutbox }
+        \dim_set:Nn \extrarowheight
+          { \fp_use:N \l_tmpa_fp \extrarowheight }
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[int]{\heavyrulewidth, \lightrulewidth, \cmidrulewidth}
+%    设置 \pkg{booktabs} 三线表的横线粗细。
+%    \begin{macrocode}
+\dim_set:Nn \heavyrulewidth { 1bp }
+\dim_set:Nn \lightrulewidth { 0.75bp }
+\dim_set:Nn \cmidrulewidth  { 0.5bp }
+%    \end{macrocode}
+% \end{macro}
+%
 % \subsubsection{浮动体 Floats}
 %    仅定义格式要求的图名/表名样式。在 \S\ref{sssec:page_layout} 已经使浮动体与周围文字
 %    间距为 12bp，这里只需设置 caption 与图/表间距为 6bp。
@@ -2803,6 +2947,17 @@
     tableposition  = top
   }
 %    \end{macrocode}
+%
+% \begin{macro}[int]{\@floatboxreset}
+%    根据用户要求，自动在浮动体环境开头设置居中与字号。
+%    \begin{macrocode}
+\hook_gput_code:nnn { cmd / @floatboxreset / after } { centering-fontsize }
+  {
+    \bool_if:NT \l_@@_float_auto_centering_bool { \centering }
+    \bool_if:NT \l_@@_table_auto_fontsize_bool  { \small }
+  }
+%    \end{macrocode}
+% \end{macro}
 %
 % \subsection{交叉引用 Cross referencing}
 % \subsubsection{目录等 Table of contents, etc.}
