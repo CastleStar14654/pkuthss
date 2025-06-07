@@ -595,20 +595,21 @@
     { korean }  { }
   }
   {
-    \AddToHook { begindocument / before }
-      {
+    \AtEndOfClass {
         \babelprovide [ import, main, typography / linebreaking = ]
           { \l_@@_main_language_tl }
       }
   }
 %    \end{macrocode}
 %
-%    主要语言非中文时，需要将中文作为次要语言导入。
+%    主要语言非中文时，需要将中文作为次要语言导入。主要语言为中文时，默认 \pkg{bicaption}
+%    的第二语言为英文；否则为中文。
 %    \begin{macrocode}
-\str_if_eq:VnF \l_@@_main_language_tl { chinese }
+\str_if_eq:VnTF \l_@@_main_language_tl { chinese }
+  { \PassOptionsToPackage { lang = \l_@@_english_variant_tl } { bicaption } }
   {
-    \AddToHook { begindocument / before }
-      { \babelprovide [ import, typography / linebreaking = ] { chinese } }
+    \AtEndOfClass { \babelprovide [ import, typography / linebreaking = ] { chinese } }
+    \PassOptionsToPackage { lang = chinese } { bicaption }
   }
 %    \end{macrocode}
 %
@@ -3479,7 +3480,7 @@
 % \subsubsection{续表标签 Continued floats labels}
 %    仅定义中英文的续表标签。主语言的默认设置为报错，提示用户进行设置。
 %    \begin{macrocode}
-\AtBeginDocument
+\AtEndOfClass
   {
     \pkuthss_continued_label:nnn { \l_@@_main_language_tl }
       {
@@ -3502,7 +3503,7 @@
 %    \begin{macrocode}
 \bool_if:NT \l_@@_traditional_chinese_bool
   {
-    \AtBeginDocument
+    \AtEndOfClass
       {
         \setlocalecaption { chinese } { ref }        { 參考文獻 }
         \setlocalecaption { chinese } { bib }        { 參考文獻 }
@@ -3521,13 +3522,15 @@
 %    \begin{macrocode}
 \str_if_eq:VnF \l__pkuthss_main_language_tl { korean }
   {
-    \AddToHook { begindocument / before }
-      { \babelprovide [ import ] { korean } }
+    \AtEndOfClass { \babelprovide [ import ] { korean } }
   }
-\AtBeginDocument
+\sys_if_engine_luatex:F
   {
-    \addto \extraskorean   { \ctexset { space = true } }
-    \addto \noextraskorean { \ctexset { space = auto } }
+    \AtEndOfClass
+      {
+        \addto \extraskorean   { \ctexset { space = true } }
+        \addto \noextraskorean { \ctexset { space = auto } }
+      }
   }
 %    \end{macrocode}
 %
@@ -3535,8 +3538,8 @@
 %    字体暂未配置。
 %    \begin{macrocode}
 \str_if_eq:VnF \l__pkuthss_main_language_tl { japanese }
-  { \AddToHook { begindocument / before } { \babelprovide { japanese } } }
-\AtBeginDocument
+  { \AtEndOfClass { \babelprovide { japanese } } }
+\AtEndOfClass
   {
     \addto \extraschinese    { \@@_set_cjk_baseline: }
     \addto \noextraschinese  { \@@_set_latin_baseline: }
@@ -3548,11 +3551,11 @@
 %    \end{macrocode}
 %
 % \subsubsection{本地化章节编号 Localization of chapter numberings}
-%    需要等到 \pkg{babel} 加载中文后再进行修改，因此使用 \cs{AtBeginDocument}。
+%    需要等到 \pkg{babel} 加载中文后再进行修改，因此使用 \cs{AtEndOfClass}。
 %    \begin{macrocode}
 \bool_if:NT \l_@@_chapter_localization_bool
   {
-    \AtBeginDocument
+    \AtEndOfClass
       {
         \cs_set_eq:NN \bbl@chapterfmt@chinese  \CTEXthechapter
         \cs_set_eq:NN \bbl@chapterfmt@japanese \CTEXthechapter
