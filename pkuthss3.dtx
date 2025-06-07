@@ -586,15 +586,8 @@
 \RequirePackage { babel }
 %    \end{macrocode}
 %
-% \begin{macro}[int]{\bbl@provide@intraspace}
-%    \LuaTeX 下关闭 \pkg{babel} 的 \opt{intraspace}。
-%    \begin{macrocode}
-\sys_if_engine_luatex:T
-  { \cs_set_eq:NN \bbl@provide@intraspace \prg_do_nothing: }
-%    \end{macrocode}
-% \end{macro}
-%
-%    主要语言是中文或朝鲜/韩文时，需要将主要语言以“modern”形式导入。
+%    主要语言是中文或朝鲜/韩文时，需要将主要语言以“modern”形式导入。换行与字符间距由 C\TeX
+%    处理，因此关闭（否则，在 \LuaTeX 下会出现中文标点间距过小的问题）。
 %    \begin{macrocode}
 \str_case:VnT \l_@@_main_language_tl
   {
@@ -603,7 +596,10 @@
   }
   {
     \AddToHook { begindocument / before }
-      { \babelprovide [ import, main ] { \l_@@_main_language_tl } }
+      {
+        \babelprovide [ import, main, typography / linebreaking = ]
+          { \l_@@_main_language_tl }
+      }
   }
 %    \end{macrocode}
 %
@@ -612,7 +608,7 @@
 \str_if_eq:VnF \l_@@_main_language_tl { chinese }
   {
     \AddToHook { begindocument / before }
-      { \babelprovide [ import ] { chinese } }
+      { \babelprovide [ import, typography / linebreaking = ] { chinese } }
   }
 %    \end{macrocode}
 %
