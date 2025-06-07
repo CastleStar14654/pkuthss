@@ -498,6 +498,36 @@
   }
 %    \end{macrocode}
 %
+% \subsubsection{续表标签 Labels of continued tables}
+% \begin{macro}{continued-label}
+%    键名为语言，键值需为 \pkg{clist}。若只传入单个元素，则为标签前缀；若两个元素，则为表序
+%    后缀。前缀与标签之间不会自动添加空格。
+%    \begin{macrocode}
+\keys_define:nn { pkuthss / continued-label }
+  {
+    unknown .code:n =
+      {
+        \clist_set:Nn \l_tmpa_clist { #1, { } }
+        \clist_pop:NN \l_tmpa_clist \l_tmpa_tl
+        \clist_pop:NN \l_tmpa_clist \l_tmpb_tl
+%    \end{macrocode}
+%    自动处理可能的英语变体。由于用户设置本选项时可能还没有设置 \opt{english-variant}，因此
+%    这里不展开 \cs{l_@@_english_variant_tl}。
+%    \begin{macrocode}
+        \str_if_eq:VnTF \l_keys_key_str { english }
+          {
+            \tl_set:Nn \l_@@_tmpa_tl
+              { \exp_not:N \l_@@_english_variant_tl }
+          }
+          { \tl_set:NV \l_@@_tmpa_tl \l_keys_key_str }
+        \tl_set:Ne \l_@@_tmpb_tl
+          { { \l_@@_tmpa_tl } { \l_tmpa_tl } { \l_tmpb_tl } }
+        \tl_put_left:Nn \l_@@_tmpb_tl { \pkuthss_continued_label:nnn }
+        \exp_args:NV \AtBeginDocument \l_@@_tmpb_tl
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
 %
 % \subsection{加载上游文档类与宏包 Loading upstream class and packages}
 %    处理选项后加载 \cls{ctexbook}。
@@ -510,6 +540,7 @@
 \RequirePackage { array }
 \RequirePackage { tabularx, multirow }
 \RequirePackage { booktabs }
+\RequirePackage { longtable }
 \RequirePackage { caption }
 \RequirePackage [ \l_@@_footmisc_option_clist ] { footmisc }
 \RequirePackage { etoolbox }
@@ -1311,6 +1342,16 @@
 \skip_set:Nn \textfloatsep { 12bp plus 2bp minus 2bp }
 \skip_set:Nn \intextsep    { 12bp plus 2bp minus 2bp }
 \skip_set:Nn \@fpsep       { 12bp plus 2fil}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\LTpre, \LTpost}
+%    \env{longtable} 前后的间距。由于 \env{longtable} 直接在 main vertical list 中
+%    排版，表尾横线位于基线，在 \cs{LTpost} 为 0 时，与正文首行基线的间距为
+%    \cs{baselineskip} 而非 \cs{topskip}，因此需要特殊处理。
+%    \begin{macrocode}
+\skip_set_eq:NN \LTpre  \textfloatsep
+\skip_set:Nn    \LTpost { \textfloatsep + \topskip - \baselineskip }
 %    \end{macrocode}
 % \end{macro}
 %
@@ -2883,7 +2924,7 @@
 %    \end{macrocode}
 % \end{macro}
 %
-% \begin{macro}[int]{\@@@@array}
+% \begin{macro}{\@@_row_vsep_array_hook:}
 %    \cs{arraystretch} 的原本定义为对 \cs{strutbox} 的高与深同时乘上的系数，从而得到
 %    \cs{@arstrutbox}。由于 \cs{strutbox} 的高度通常比深度大很多，表格中每一行上方间距会
 %    比下方间距相应的长。
@@ -2898,7 +2939,7 @@
 %
 %    这一功能可以通过更改 \cs{l_@@_tabular_vsep_always_bool} 的值来打开或关闭。
 %    \begin{macrocode}
-\hook_gput_code:nnn { cmd / @@@@array / before } { row-vsep }
+\cs_new:Nn \@@_row_vsep_array_hook:
   {
     \bool_if:NT \l_@@_tabular_vsep_always_bool
       {
@@ -2925,12 +2966,81 @@
 %    \end{macrocode}
 % \end{macro}
 %
+% \begin{macro}[int]{\@@@@array}
+%    实际加钩子。
+%    \begin{macrocode}
+\hook_gput_code:nnn { cmd / @@@@array / before } { row-vsep }
+  { \@@_row_vsep_array_hook: }
+%    \end{macrocode}
+% \end{macro}
+%
 % \begin{macro}[int]{\heavyrulewidth, \lightrulewidth, \cmidrulewidth}
 %    设置 \pkg{booktabs} 三线表的横线粗细。
 %    \begin{macrocode}
 \dim_set:Nn \heavyrulewidth { 1bp }
 \dim_set:Nn \lightrulewidth { 0.75bp }
 \dim_set:Nn \cmidrulewidth  { 0.5bp }
+%    \end{macrocode}
+% \end{macro}
+%
+% \paragraph{对 \env{longtable} 的特殊处理}
+% \begin{macro}{\setlongtablehead}
+%    供用户自动生成重复表头的函数。这里不用 \cs{NewDocumentCommand}，是因为这个宏需要即时
+%    展开，因此不能是 \cs{protected} 的。
+%    \begin{macrocode}
+\cs_new:Npn \setlongtablehead #1
+  {
+    #1
+    \endfirsthead
+    \captionsetup{labelformat=continued, list=no}
+    #1
+    \endhead
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\pkuthss_continued_label:nnn}
+%    设置续表标签的接口；用户推荐使用 \cs{pkusetup} 设置。
+%    \begin{macrocode}
+\cs_new:Nn \pkuthss_continued_label:nnn
+  {
+    \setlocalecaption {#1} { precontinued }  { #2 }
+    \tl_if_blank:nTF {#3}
+      { \setlocalecaption {#1} { postcontinued } { } }
+      { \setlocalecaption {#1} { postcontinued } { \nobreakspace #3 } }
+  }
+\DeclareCaptionLabelFormat { continued }
+  {
+    \precontinuedname
+    \bothIfFirst {#1} { \nobreakspace } #2
+    \postcontinuedname
+  }
+\captionsetup [ ContinuedFloat ] { labelformat = continued }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\LT@makecaption}
+%    \pkg{caption} 对 \env{longtable} 中表名的处理会导致 \cs{arraystretch} 不为 1 时
+%    的前后间距不正常；这里做了处理。
+%    \begin{macrocode}
+\patchcmd \LT@makecaption
+  { \caption@normalsize \vskip -\ht\strutbox }
+  { \skip_vertical:n { - \box_ht:N \@arstrutbox } }
+  { }
+  {
+    \msg_warning:nnnn { pkuthss } { etoolbox-patch-failed }
+      { \patchcmd } { \LT@makecaption }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[int]{\longtable}
+%    对 \env{longtable}，需要先设置字号，再设置间距。
+%    \begin{macrocode}
+\hook_gput_code:nnn { env / longtable / begin } { fontsize }
+  { \bool_if:NT \l_@@_table_auto_fontsize_bool { \small } }
+\hook_gput_code:nnn { env / longtable / begin }  { row-vsep }
+  { \@@_row_vsep_array_hook: }
 %    \end{macrocode}
 % \end{macro}
 %
@@ -3279,6 +3389,28 @@
   }
 %    \end{macrocode}
 %
+% \subsubsection{续表标签 Continued floats labels}
+%    仅定义中英文的续表标签。主语言的默认设置为报错，提示用户进行设置。
+%    \begin{macrocode}
+\AtBeginDocument
+  {
+    \pkuthss_continued_label:nnn { \l_@@_main_language_tl }
+      {
+        \msg_error:nnV { pkuthss } { continued-label-undefined }
+          \l_@@_main_language_tl
+      }
+      { }
+    \pkuthss_continued_label:nnn { chinese } { 续 } { }
+    \pkuthss_continued_label:nnn { \l_@@_english_variant_tl }
+      { } { (Continued) }
+  }
+\msg_new:nnn { pkuthss } { continued-label-undefined }
+  {
+    Use~\token_to_str:N \pkusetup{continued-label/#1~=~{pre,~post}}~
+    to~define~the~continued~float~label~for~#1~language.
+  }
+%    \end{macrocode}
+%
 % \subsubsection{繁体中文 Traditional Chinese}
 %    \begin{macrocode}
 \bool_if:NT \l_@@_traditional_chinese_bool
@@ -3292,6 +3424,7 @@
         \setlocalecaption { chinese } { listfigure } { 插圖 }
         \setlocalecaption { chinese } { figure }     { 圖 }
         \setlocalecaption { chinese } { proof }      { 證明 }
+        \pkuthss_continued_label:nnn { chinese } { 續 } { }
       }
   }
 %    \end{macrocode}
@@ -3300,7 +3433,10 @@
 %    需要保留谚文之间的空格。
 %    \begin{macrocode}
 \str_if_eq:VnF \l__pkuthss_main_language_tl { korean }
-  { \AtBeginDocument { \babelprovide [ import ] { korean } } }
+  {
+    \AddToHook { begindocument / before }
+      { \babelprovide [ import ] { korean } }
+  }
 \AtBeginDocument
   {
     \addto \extraskorean   { \ctexset { space = true } }
@@ -3312,7 +3448,7 @@
 %    字体暂未配置。
 %    \begin{macrocode}
 \str_if_eq:VnF \l__pkuthss_main_language_tl { japanese }
-  { \AtBeginDocument { \babelprovide { japanese } } }
+  { \AddToHook { begindocument / before } { \babelprovide { japanese } } }
 \AtBeginDocument
   {
     \addto \extraschinese    { \@@_set_cjk_baseline: }
