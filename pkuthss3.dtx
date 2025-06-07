@@ -541,6 +541,8 @@
 \RequirePackage { tabularx, multirow }
 \RequirePackage { booktabs }
 \RequirePackage { longtable }
+\RequirePackage [ figuresright ] { rotating }
+\RequirePackage { pdflscape }
 \RequirePackage { caption }
 \RequirePackage [ \l_@@_footmisc_option_clist ] { footmisc }
 \RequirePackage { etoolbox }
@@ -3065,6 +3067,95 @@
   {
     \bool_if:NT \l_@@_float_auto_centering_bool { \centering }
     \bool_if:NT \l_@@_table_auto_fontsize_bool  { \small }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \paragraph{宽浮动体 Sideways floats}
+% \begin{macro}[int]{\@xrotfloat}
+%    由于 \pkg{rotating} 宏包将浮动体内容又嵌套了一个盒子，因此需要重复居中钩子。
+%    \begin{macrocode}
+\hook_gput_code:nnn { cmd / @xrotfloat / after } { centering }
+  { \bool_if:NT \l_@@_float_auto_centering_bool { \centering } }
+%    \end{macrocode}
+%
+%    \pkg{rotating} 宏包的 \env{sidewaystable} 等环境实现为了浮动体，因此无法直接使用
+%    \pkg{pdflscape} 提供的页面旋转功能，需要自行实现。由于限制了单栏排版，因此仅对单栏版本
+%    的 \cs{@xrotfloat} 加钩子。
+%    \begin{macrocode}
+\hook_gput_code:nnn { cmd / @xrotfloat / before } { landscape }
+  { \@@_sideway_float_hook_before: }
+\hook_gput_code:nnn { cmd / @xrotfloat / after } { landscape }
+  { \@@_sideway_float_hook_after: }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_sideway_float_hook_before:}
+%    将 \env{sidewaystable} 的宽度设置为常量 \cs{c_@@_sideway_width_dim} 比
+%    \cs{textheight} 少 1sp，以供识别。
+%    \begin{macrocode}
+\dim_const:Nn \c_@@_sideway_width_dim { \textheight - 1sp }
+\cs_new:Nn \@@_sideway_float_hook_before:
+  { \dim_set_eq:NN \textheight \c_@@_sideway_width_dim }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[int]{\@@_sideway_float_hook_after:, \@wtryfc}
+%    \XeTeX 下，只需在浮动体内设置当前页 PDF 属性。
+%    \begin{macrocode}
+\@@_xetex_luatex_cases:nn
+  {
+    \cs_new:Nn \@@_sideway_float_hook_after:
+      {
+        \sys_if_engine_xetex:T
+          { \tex_special:D { pdf:~put~@thispage~<</Rotate~90>> } }
+      }
+  }
+%    \end{macrocode}
+%    \pdfTeX 或 \LuaTeX 下则较为复杂，需要等到真正排版该浮动体时再进行页面旋转。实现方式是
+%    在 \cs{@wtryfc} 这一实际进行独立成页浮动体的函数中判断当前是否为旋转过的浮动体；如果
+%    是，则启用 PDF 旋转，且在当前页输出后结束旋转。
+%    \begin{macrocode}
+  {
+    \cs_new_eq:NN \@@_sideway_float_hook_after: \prg_do_nothing:
+    \hook_gput_code_with_args:nnn
+      { cmd / @wtryfc / before } { landscape }
+      {
+        \dim_compare:nNnT
+          { \box_ht:N #1 } = { \c_@@_sideway_width_dim }
+          {
+            \@@_page_rotate:n { 90 }
+            \hook_gput_next_code:nn { \c_@@_build_page_after_tl }
+              { \@@_page_rotate:n { 0 } }
+          }
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\c_@@_build_page_after_tl}
+%    输出例程结束处的钩子名称。
+%    \begin{macrocode}
+\IfFormatAtLeastTF { 2024-06-01 }
+  { \tl_const:Nn \c_@@_build_page_after_tl { build / page / after } }
+  {
+    \tl_const:Nn \c_@@_build_page_after_tl
+      { cmd / @outputpage / after }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{}
+%    \begin{macrocode}
+\IfPackageLoadedTF { pdflscape-nometadata }
+  { \cs_new:Nn \@@_page_rotate:n { \PLS@Rotate {#1} } }
+  {
+    \cs_new:Nn \@@_page_rotate:n
+      {
+        \fp_compare:nNnTF {#1} = { 0 }
+          { \pdfmanagement_remove:nn { Page } { Rotate } }
+          { \pdfmanagement_add:nnx { Page } { Rotate } {#1} }
+      }
   }
 %    \end{macrocode}
 % \end{macro}
