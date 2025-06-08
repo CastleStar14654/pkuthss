@@ -1791,7 +1791,7 @@
       {
         \centering
         { \Huge\bfseries\sffamily \strut \l_tmpa_tl }
-        \tex_par:D
+        \para_end:
         {
           \strut \zihao{-2}\fangsong
           \prop_item:Nn \l_@@_metadata_label_prop { anonymous_label }
@@ -1804,7 +1804,7 @@
           \prop_item:Nn \l_@@_metadata_label_prop { title_chinese }
           ：
           \tl_use:c { l_@@_title_ ##1 _tl }
-          \tex_par:D
+          \para_end:
         }
       \skip_vertical:n { 31.2bp }
       \clist_map_inline:nn { discipline , major }
@@ -1812,7 +1812,7 @@
           \prop_item:Nn \l_@@_metadata_label_prop { anonymous_ ##1 }
           ：
           \tl_use:c { l_@@_ ##1 _chinese_tl }
-          \tex_par:D
+          \para_end:
         }
       \prop_item:Nn \l_@@_metadata_label_prop { blind_id }
       ： \l_@@_blind_id_str
@@ -1898,7 +1898,7 @@
                   请前往下方 URL 下载 \texttt{\c_@@_pku_logo_file_tl} \\
                   { \small \url { \c_@@_pku_logo_url_str } } \\
                   Download~\texttt{\c_@@_pku_logo_file_tl}~at~the~URL~above
-                  \tex_par:D
+                  \para_end:
                 }
             }
         }
@@ -2776,7 +2776,7 @@
           \centering
           \tl_use:N \l_@@_name_english_tl \c_space_tl
           ( \l_@@_major_english_tl )
-          \tex_par:D
+          \para_end:
           Supervised~by~
           \clist_use:Nnnn \l_@@_mentor_english_clist
             { ~and~ } { ,~ } { ,~and~ }
@@ -3385,12 +3385,15 @@
   {
     \dim_set:Nn \leftskip  { 1.5\ccwd }
     \dim_set:Nn \parindent { 2\ccwd }
-    \tex_noindent:D
-    \hbox_to_zero:n
+    \hook_gput_next_code:nn { para / begin }
       {
-        \skip_horizontal:n { -1.5\ccwd }
-        \tex_hss:D \@thefnmark \tex_hss:D
-        \skip_horizontal:n { .5\ccwd }
+        \para_omit_indent:
+        \hbox_to_zero:n
+          {
+            \skip_horizontal:n { -1.5\ccwd }
+            \tex_hss:D \@thefnmark \tex_hss:D
+            \skip_horizontal:n { .5\ccwd }
+          }
       }
     #1
   }
@@ -3423,13 +3426,15 @@
           \tex_hss:D
           \dim_set:Nn \l_tmpa_dim { \f@size pt }
           \dim_set:Nn \l_tmpa_dim { 0.7 \l_tmpa_dim }
-          \tex_raise:D 0.107825em
-            \hbox:n
-              {
-                \set@fontsize
-                  \f@linespread { \dim_use:N \l_tmpa_dim } \f@baselineskip
-                \selectfont \upshape #1
-              }
+          \box_move_up:nn { 0.107825em }
+            {
+              \hbox:n
+                {
+                  \set@fontsize
+                    \f@linespread { \dim_use:N \l_tmpa_dim } \f@baselineskip
+                  \selectfont \upshape #1
+                }
+            }
           \tex_hss:D
           \tex_crcr:D
           \box_resize_to_wd:Nn \l_@@_text_circle_box { 0.9em }
