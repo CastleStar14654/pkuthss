@@ -323,15 +323,6 @@
 %    \end{macrocode}
 % \end{macro}
 %
-% \begin{macro}{chapter-localization, \l_@@_chapter_localization_bool}
-%    控制是否将章节序号（“第一章”等）按照 \opt{language} 进行本地化。
-%    \begin{macrocode}
-    chapter-localization .bool_set:N = \l_@@_chapter_localization_bool,
-    chapter-localization .initial:n  = true,
-    chapter-localization .usage:n    = load,
-%    \end{macrocode}
-% \end{macro}
-%
 % \begin{macro}{footmisc, \l_@@_footmisc_option_clist}
 %    希望传给 \pkg{footmisc} 的参数。
 %    \begin{macrocode}
@@ -371,6 +362,14 @@
     anonymous .bool_set:N = \l_@@_anonymous_bool,
     anonymous .default:n  = true,
     anonymous .initial:n  = false,
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{chapter-localization, \l_@@_chapter_localization_bool}
+%    控制是否将章节序号（“第一章”等）按照 \opt{language} 进行本地化。
+%    \begin{macrocode}
+    chapter-localization .bool_set:N = \l_@@_chapter_localization_bool,
+    chapter-localization .initial:n  = true,
 %    \end{macrocode}
 % \end{macro}
 %
@@ -525,9 +524,13 @@
               { \exp_not:N \l_@@_english_variant_tl }
           }
           { \tl_set:NV \l_@@_tmpa_tl \l_keys_key_str }
-        \tl_set:Ne \l_@@_tmpb_tl
+        \tl_set:Nn \l_@@_tmpb_tl { \pkuthss_continued_label:nnn }
+        \tl_put_right:Ne \l_@@_tmpb_tl
           { { \l_@@_tmpa_tl } { \l_tmpa_tl } { \l_tmpb_tl } }
-        \tl_put_left:Nn \l_@@_tmpb_tl { \pkuthss_continued_label:nnn }
+%    \end{macrocode}
+%    若用户在文档类选项中设置本选项，为避免文档类内的初始化覆盖，将用户的设置生效延迟至导言区
+%    结束。
+%    \begin{macrocode}
         \exp_args:NV \AtBeginDocument \l_@@_tmpb_tl
       }
   }
@@ -574,7 +577,7 @@
 %    \end{macrocode}
 %    主要语言不是英文时，还需导入主要语言。由于中文或朝鲜/韩文需要将主要语言以“modern”形式
 %    导入，但 \pkg{babel} 和 \pkg{luatexja} 在 CJK 字符间距上存在不兼容，需要后面手动关
-%    闭 \opt{intraspace}，因此不在此直接导入。
+%    闭 \opt{linebreaking}，因此不在此直接导入。
 %    \begin{macrocode}
 \str_case:VnF \l_@@_main_language_tl
   {
@@ -582,17 +585,28 @@
     { english } { }
     { korean } { }
   }
-  {
-    \PassOptionsToPackage { \l_@@_main_language_tl } { babel }
-  }
+  { \PassOptionsToPackage { \l_@@_main_language_tl } { babel } }
 %    \end{macrocode}
 %    导入 \pkg{babel}。
 %    \begin{macrocode}
 \RequirePackage { babel }
 %    \end{macrocode}
 %
-%    主要语言是中文或朝鲜/韩文时，需要将主要语言以“modern”形式导入。换行与字符间距由 C\TeX
-%    处理，因此关闭（否则，在 \LuaTeX 下会出现中文标点间距过小的问题）。
+%    主要语言是中文或朝鲜/韩文时，需要将主要语言以“modern”形式导入。由于 \pkg{babel} 导入
+%    语言时会以不由 \LaTeX 管理的方式读取文件，需要关闭 \LaTeX3 语法以保留空格。这里
+%    包装一个宏来处理。
+%    \begin{macrocode}
+\cs_new:Nn \@@_babelprovide:nn
+  {
+    \tl_set:Nn \l_@@_tmpa_tl { \babelprovide }
+    \tl_put_right:Ne \l_@@_tmpa_tl { [#1] {#2} }
+    \exp_args:Nc \ExplSyntaxOff
+      { l_@@_tmpa_tl }
+    \ExplSyntaxOn
+  }
+%    \end{macrocode}
+%
+%    换行与字符间距由 C\TeX 处理，因此关闭（否则，在 \LuaTeX 下会出现中文标点间距过小的问题）。
 %    \begin{macrocode}
 \str_case:VnT \l_@@_main_language_tl
   {
@@ -600,10 +614,9 @@
     { korean }  { }
   }
   {
-    \AtEndOfClass {
-        \babelprovide [ import, main, typography / linebreaking = ]
-          { \l_@@_main_language_tl }
-      }
+    \@@_babelprovide:nn
+      { import, main, typography / linebreaking = }
+      { \l_@@_main_language_tl }
   }
 %    \end{macrocode}
 %
@@ -613,7 +626,8 @@
 \str_if_eq:VnTF \l_@@_main_language_tl { chinese }
   { \PassOptionsToPackage { lang = \l_@@_english_variant_tl } { bicaption } }
   {
-    \AtEndOfClass { \babelprovide [ import, typography / linebreaking = ] { chinese } }
+    \@@_babelprovide:nn
+      { import, typography / linebreaking = } { chinese }
     \PassOptionsToPackage { lang = chinese } { bicaption }
   }
 %    \end{macrocode}
@@ -3008,7 +3022,7 @@
 %    \begin{macrocode}
 \cs_new:Nn \pkuthss_continued_label:nnn
   {
-    \setlocalecaption {#1} { precontinued }  { #2 }
+    \setlocalecaption {#1} { precontinued } {#2}
     \tl_if_blank:nTF {#3}
       { \setlocalecaption {#1} { postcontinued } { } }
       { \setlocalecaption {#1} { postcontinued } { \nobreakspace #3 } }
@@ -3490,18 +3504,15 @@
 % \subsubsection{续表标签 Continued floats labels}
 %    仅定义中英文的续表标签。主语言的默认设置为报错，提示用户进行设置。
 %    \begin{macrocode}
-\AtEndOfClass
+\pkuthss_continued_label:nnn { \l_@@_main_language_tl }
   {
-    \pkuthss_continued_label:nnn { \l_@@_main_language_tl }
-      {
-        \msg_error:nnV { pkuthss } { continued-label-undefined }
-          \l_@@_main_language_tl
-      }
-      { }
-    \pkuthss_continued_label:nnn { chinese } { 续 } { }
-    \pkuthss_continued_label:nnn { \l_@@_english_variant_tl }
-      { } { (Continued) }
+    \msg_error:nnV { pkuthss } { continued-label-undefined }
+      \l_@@_main_language_tl
   }
+  { }
+\pkuthss_continued_label:nnn { chinese } { 续 } { }
+\pkuthss_continued_label:nnn { \l_@@_english_variant_tl }
+  { } { (Continued) }
 \msg_new:nnn { pkuthss } { continued-label-undefined }
   {
     Use~\token_to_str:N \pkusetup{continued-label/#1~=~{pre,~post}}~
@@ -3513,59 +3524,48 @@
 %    \begin{macrocode}
 \bool_if:NT \l_@@_traditional_chinese_bool
   {
-    \AtEndOfClass
-      {
-        \setlocalecaption { chinese } { ref }        { 參考文獻 }
-        \setlocalecaption { chinese } { bib }        { 參考文獻 }
-        \setlocalecaption { chinese } { appendix }   { 附錄 }
-        \setlocalecaption { chinese } { contents }   { 目錄 }
-        \setlocalecaption { chinese } { listfigure } { 插圖 }
-        \setlocalecaption { chinese } { figure }     { 圖 }
-        \setlocalecaption { chinese } { proof }      { 證明 }
-        \pkuthss_continued_label:nnn { chinese } { 續 } { }
-      }
+    \setlocalecaption { chinese } { ref }        { 參考文獻 }
+    \setlocalecaption { chinese } { bib }        { 參考文獻 }
+    \setlocalecaption { chinese } { appendix }   { 附錄 }
+    \setlocalecaption { chinese } { contents }   { 目錄 }
+    \setlocalecaption { chinese } { listfigure } { 插圖 }
+    \setlocalecaption { chinese } { figure }     { 圖 }
+    \setlocalecaption { chinese } { proof }      { 證明 }
+    \pkuthss_continued_label:nnn { chinese } { 續 } { }
   }
 %    \end{macrocode}
 %
 % \subsubsection{朝鲜/韩文 Korean}
 %    需要保留谚文之间的空格。
 %    \begin{macrocode}
-\str_if_eq:VnF \l__pkuthss_main_language_tl { korean }
-  {
-    \AtEndOfClass { \babelprovide [ import ] { korean } }
-  }
+\str_if_eq:VnF \l_@@_main_language_tl { korean }
+  { \@@_babelprovide:nn { import } { korean } }
 \sys_if_engine_luatex:F
   {
-    \AtEndOfClass
-      {
-        \addto \extraskorean   { \ctexset { space = true } }
-        \addto \noextraskorean { \ctexset { space = auto } }
-      }
+    \addto \extraskorean   { \ctexset { space = true } }
+    \addto \noextraskorean { \ctexset { space = auto } }
   }
 %    \end{macrocode}
 %
 % \subsubsection{日韩字体与 CJK 行距 Japanese and Korean fonts and CJK line spacing}
 %    字体暂未配置。
 %    \begin{macrocode}
-\str_if_eq:VnF \l__pkuthss_main_language_tl { japanese }
-  { \AtEndOfClass { \babelprovide { japanese } } }
-\AtEndOfClass
-  {
-    \addto \extraschinese    { \@@_set_cjk_baseline: }
-    \addto \noextraschinese  { \@@_set_latin_baseline: }
-    \addto \extrasjapanese   { \@@_set_cjk_baseline: }
-    \addto \noextrasjapanese { \@@_set_latin_baseline: }
-    \addto \extraskorean     { \@@_set_cjk_baseline: }
-    \addto \noextraskorean   { \@@_set_latin_baseline: }
-  }
+\str_if_eq:VnF \l_@@_main_language_tl { japanese }
+  { \@@_babelprovide:nn { } { japanese } }
+\addto \extraschinese    { \@@_set_cjk_baseline: }
+\addto \noextraschinese  { \@@_set_latin_baseline: }
+\addto \extrasjapanese   { \@@_set_cjk_baseline: }
+\addto \noextrasjapanese { \@@_set_latin_baseline: }
+\addto \extraskorean     { \@@_set_cjk_baseline: }
+\addto \noextraskorean   { \@@_set_latin_baseline: }
 %    \end{macrocode}
 %
 % \subsubsection{本地化章节编号 Localization of chapter numberings}
-%    需要等到 \pkg{babel} 加载中文后再进行修改，因此使用 \cs{AtEndOfClass}。
+%    允许用户在导言区修改设置，因此后置这一本地化修改。
 %    \begin{macrocode}
-\bool_if:NT \l_@@_chapter_localization_bool
+\AtBeginDocument
   {
-    \AtEndOfClass
+    \bool_if:NT \l_@@_chapter_localization_bool
       {
         \cs_set_eq:NN \bbl@chapterfmt@chinese  \CTEXthechapter
         \cs_set_eq:NN \bbl@chapterfmt@japanese \CTEXthechapter
