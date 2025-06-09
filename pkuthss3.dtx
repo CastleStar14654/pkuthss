@@ -219,7 +219,8 @@
 %    \end{macrocode}
 %
 % \subsubsection{文档类加载时选项 Class loading-time options}
-% \begin{macro}{fontset, fontset-use-noto, fontset-use-gyre, fontset-required}
+% \begin{macro}
+%   {fontset, fontset-use-noto, fontset-use-gyre, fontset-use-arial, fontset-required}
 %    如果用户希望使用 C\TeX{} 的字体配置或自行配置字体，则需指定本选项的值。
 %
 %    如果用户希望宋、黑体使用思源（Noto）系列，则需指定 \opt{fontset-use-noto} 选项。
@@ -306,6 +307,9 @@
 % \end{macro}
 %
 % \begin{macro}{biblatex-style}
+%    参考文献格式，\opt{authoryear} 与 \opt{numeric} 会自动使用
+%    \pkg{biblatex-gb7714-2015} 样式的著者--出版年与顺序编码制。如果不希望自动调用
+%    \pkg{biblatex}，需要传入 \opt{none}；这时，也不会自动配置逐附录参考文献等功能。
 %    \begin{macrocode}
     biblatex-style .choice:,
     biblatex-style / authoryear .code:n =
@@ -329,6 +333,7 @@
 % \end{macro}
 %
 % \begin{macro}{footmisc, \l_@@_footmisc_option_clist}
+%    希望传给 \pkg{footmisc} 的参数。
 %    \begin{macrocode}
     footmisc .clist_set:N      = \l_@@_footmisc_option_clist,
     footmisc .initial:n        = { perpage, bottom, belowfloats },
@@ -422,7 +427,7 @@
 % \end{macro}
 %
 % \begin{macro}{bib-per-appendix, \l_@@_bib_per_appendix_bool}
-%    是否逐附录编制参考文献表。
+%    是否逐附录编制参考文献表。若设置了 \opt{biblatex-style=none}，则本选项无效。
 %    \begin{macrocode}
     bib-per-appendix .bool_set:N = \l_@@_bib_per_appendix_bool,
     bib-per-appendix .initial:n  = false,
@@ -759,7 +764,7 @@
 %    \begin{macrocode}
                     \fontspec_font_if_exist:nF { NotoSerifCJKsc-Light.otf }
                       {
-                        msg_warning:nn { pkuthss } { noto-not-found }
+                        \msg_warning:nn { pkuthss } { noto-not-found }
                         \bool_set_eq:NN \l_@@_tmpa_bool \c_false_bool
                       }
                   }
@@ -846,7 +851,7 @@
                   {
                     \fontspec_font_if_exist:nF { NotoSansCJKsc-DemiLight.otf }
                       {
-                        msg_warning:nn { pkuthss } { noto-not-found }
+                        \msg_warning:nn { pkuthss } { noto-not-found }
                         \bool_set_eq:NN \l_@@_tmpa_bool \c_false_bool
                       }
                   }
