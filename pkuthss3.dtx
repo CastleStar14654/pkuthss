@@ -575,26 +575,35 @@
 %    \begin{macrocode}
 \PassOptionsToPackage { \l_@@_english_variant_tl } { babel }
 %    \end{macrocode}
-%    主要语言不是英文时，还需导入主要语言。由于中文或朝鲜/韩文需要将主要语言以“modern”形式
-%    导入，但 \pkg{babel} 和 \pkg{luatexja} 在 CJK 字符间距上存在不兼容，需要后面手动关
-%    闭 \opt{linebreaking}，因此不在此直接导入。
+%
+%    主要语言不是英文时，还需导入主要语言。
 %    \begin{macrocode}
-\str_case:VnF \l_@@_main_language_tl
-  {
-    { chinese } { }
-    { english } { }
-    { korean } { }
-  }
+\str_if_eq:VnF \l_@@_main_language_tl { english }
   { \PassOptionsToPackage { \l_@@_main_language_tl } { babel } }
 %    \end{macrocode}
-%    导入 \pkg{babel}。
+%    中文或朝鲜/韩文需要以“modern”形式导入，但 \pkg{babel} 和 \pkg{luatexja} 在 CJK
+%    字符间距上存在不兼容，需要手动关闭 \opt{linebreaking}。否则，标点间距会过小。
 %    \begin{macrocode}
+\str_case:VnT \l_@@_main_language_tl
+  {
+    { chinese } { }
+    { korean }  { }
+  }
+  {
+    \PassOptionsToPackage
+      { provide = { typography / linebreaking = } } { babel }
+  }
+%    \end{macrocode}
+%    导入 \pkg{babel}。由于 \pkg{babel} 导入语言时会以不由 \LaTeX 管理的方式读取 ini
+%    文件，需要关闭 \LaTeX3 语法以保留空格。
+%    \begin{macrocode}
+\ExplSyntaxOff
 \RequirePackage { babel }
+\ExplSyntaxOn
 %    \end{macrocode}
 %
-%    主要语言是中文或朝鲜/韩文时，需要将主要语言以“modern”形式导入。由于 \pkg{babel} 导入
-%    语言时会以不由 \LaTeX 管理的方式读取文件，需要关闭 \LaTeX3 语法以保留空格。这里
-%    包装一个宏来处理。
+% \begin{macro}{\@@_babelprovide:nn}
+%    同时也包装一个关闭 \LaTeX3 语法的宏来处理之后可能的 \cs{babelprovide}。
 %    \begin{macrocode}
 \cs_new:Nn \@@_babelprovide:nn
   {
@@ -605,20 +614,7 @@
     \ExplSyntaxOn
   }
 %    \end{macrocode}
-%
-%    换行与字符间距由 C\TeX 处理，因此关闭（否则，在 \LuaTeX 下会出现中文标点间距过小的问题）。
-%    \begin{macrocode}
-\str_case:VnT \l_@@_main_language_tl
-  {
-    { chinese } { }
-    { korean }  { }
-  }
-  {
-    \@@_babelprovide:nn
-      { import, main, typography / linebreaking = }
-      { \l_@@_main_language_tl }
-  }
-%    \end{macrocode}
+% \end{macro}
 %
 %    主要语言非中文时，需要将中文作为次要语言导入。主要语言为中文时，默认 \pkg{bicaption}
 %    的第二语言为英文；否则为中文。
