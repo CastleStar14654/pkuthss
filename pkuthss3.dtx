@@ -425,6 +425,16 @@
 %    \end{macrocode}
 % \end{macro}
 %
+% \begin{macro}{authoryear-auto-fullwidth}
+%    著者--出版年制下，是否自动在中文或日文环境下使用全角括号作为引用标签。
+%    \begin{macrocode}
+    authoryear-auto-fullwidth .bool_set:N =
+      \l_@@_authoryear_auto_fw_bool,
+    authoryear-auto-fullwidth .default:n  = true,
+    authoryear-auto-fullwidth .initial:n  = true,
+%    \end{macrocode}
+% \end{macro}
+%
 % \begin{macro}{bib-per-appendix, \l_@@_bib_per_appendix_bool}
 %    是否逐附录编制参考文献表。若设置了 \opt{biblatex-style=none}，则本选项无效。
 %    \begin{macrocode}
@@ -560,12 +570,33 @@
 \RequirePackage { pdfpages }
 \RequirePackage { unicode-math }
 \RequirePackage [ bookmarksnumbered ] { hyperref }
+\RequirePackage [ all ] { hypcap }
+%    \end{macrocode}
+%
+% \begin{macro}{\c_@@_biblatex_gb_new_bool, \c_@@_biblatex_gb_tl}
+%    记录 \pkg{biblatex-gb7714-2015} 是否是更新了 2025 版的新版本。
+%    \begin{macrocode}
+\IfFileAtLeastTF { gb7714-2015.bbx } { 2025/05/22 }
+  {
+    \bool_const:Nn \c_@@_biblatex_gb_new_bool { \c_true_bool }
+    \tl_set:Nn \c_@@_biblatex_gb_tl { gb7714 }
+  }
+  {
+    \bool_const:Nn \c_@@_biblatex_gb_new_bool { \c_false_bool }
+    \tl_set:Nn \c_@@_biblatex_gb_tl { gb7714-2015 }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+%    \begin{macrocode}
 \bool_if:NT \l_@@_biblatex_load_bool
   {
-    \bool_if:NTF \l_@@_author_year_bool
-      { \PassOptionsToPackage { style = gb7714-2015ay } { biblatex } }
-      { \PassOptionsToPackage { style = gb7714-2015 }   { biblatex } }
-    \RequirePackage [ natbib = true, defernumbers = true ] { biblatex }
+    \tl_set_eq:NN \l_@@_tmpa_tl \c_@@_biblatex_gb_tl
+    \bool_if:NT \l_@@_author_year_bool
+      { \tl_put_right:Nn \l_@@_tmpa_tl { ay } }
+    \RequirePackage
+      [ natbib = true, defernumbers = true, style = \l_@@_tmpa_tl ]
+      { biblatex }
   }
 %    \end{macrocode}
 %
@@ -3278,13 +3309,15 @@
     \bibfontsize
 %    \end{macrocode}
 %    著者--出版年格式下设置缩进格式；引用标记全角/半角设置稍后利用 \pkg{babel} 在本地化时
-%    进行。
+%    进行。关闭正文内引用标签的排序。西文作者姓重复时，显示名的缩写。不要求整个作者列表不重复。
 %    \begin{macrocode}
     \bool_if:NTF \l_@@_author_year_bool
       {
         \ExecuteBibliographyOptions
           {
-            gbcitelabel = parensqj,
+            sortcites   = false,
+            uniquename  = init,
+            uniquelist  = false
           }
         \dim_set:Nn \bibitemindent { -2\ccwd }
         \dim_set:Nn \bibhang { 2\ccwd }
@@ -3294,17 +3327,17 @@
 %    用数字编号。
 %    \begin{macrocode}
       {
-        \ExecuteBibliographyOptions
-          {
-            gbalign = gb7714,
-          }
+        \exp_args:Ne \ExecuteBibliographyOptions
+          { gbalign = \c_@@_biblatex_gb_tl }
       }
     \dim_set:Nn \biblabelsep { 0.5em }
 %    \end{macrocode}
-%    通用设置。样例中未要求西文作者姓大写，因此保留输入的大小写格式。
+%    通用设置。著者--出版年样式中，若作者标签恰巧跨页，容易出现超链接的问题，因此关闭作者标签
+%    的超链接。样例中未要求西文作者姓大写，因此保留输入的大小写格式。
 %    \begin{macrocode}
     \ExecuteBibliographyOptions
       {
+        gblabelref   = false,
         gbnamefmt    = lowercase,
         maxcitenames = 1,
         mincitenames = 1
@@ -3313,7 +3346,8 @@
 %    字号与竖直间距。
 %    \begin{macrocode}
     \tl_set:Nn \bibfont { \bibfontsize }
-    \slashstyle { same }
+    \bool_if:NT \c_@@_biblatex_gb_new_bool
+      { \slashstyle { same } }
     \dim_set:Nn \bibitemsep { 3bp }
     \normalsize
 %    \end{macrocode}
@@ -3345,9 +3379,7 @@
 %    若关闭逐附录分列参考文献功能，则在 \cs{appendix} 中将 \cs{printbibliography} 重定
 %    义为空操作。
 %    \begin{macrocode}
-          {
-            \cs_set_eq:NN \printbibliography \prg_do_nothing:
-          }
+          { \cs_set_eq:NN \printbibliography \prg_do_nothing: }
       }
 %    \end{macrocode}
 % \end{macro}
@@ -3554,6 +3586,30 @@
 \addto \noextrasjapanese { \@@_set_latin_baseline: }
 \addto \extraskorean     { \@@_set_cjk_baseline: }
 \addto \noextraskorean   { \@@_set_latin_baseline: }
+%    \end{macrocode}
+%
+% \subsubsection{著者--出版年制引用标签全/半角 Author--year citation label fullwidth/halfwidth}
+%    \begin{macrocode}
+\bool_if:NT \l_@@_biblatex_load_bool
+  {
+    \cs_new:Ne \@@_authoryear_auto_fullwidth:
+      {
+        \bool_if:NT \l_@@_authoryear_auto_fw_bool
+          { \gbcitelabelopt@parensqj }
+      }
+    \cs_new:Ne \@@_authoryear_auto_halfwidth:
+      {
+        \bool_if:NT \l_@@_authoryear_auto_fw_bool
+          { \gbcitelabelopt@parens }
+      }
+    \bool_if:NT \l_@@_author_year_bool
+      {
+        \addto \extraschinese    { \@@_authoryear_auto_fullwidth: }
+        \addto \noextraschinese  { \@@_authoryear_auto_halfwidth: }
+        \addto \extrasjapanese   { \@@_authoryear_auto_fullwidth: }
+        \addto \noextrasjapanese { \@@_authoryear_auto_halfwidth: }
+      }
+  }
 %    \end{macrocode}
 %
 % \subsubsection{本地化章节编号 Localization of chapter numberings}
